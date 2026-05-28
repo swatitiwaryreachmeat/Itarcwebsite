@@ -1,0 +1,11 @@
+# Never commit your API key
+.env
+
+# Node modules (installed automatically by Render/Railway)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+
