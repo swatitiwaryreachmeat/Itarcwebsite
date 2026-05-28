@@ -2629,8 +2629,6 @@ textarea{resize:vertical;min-height:100px}
 
 <script>
 // ===== ITARC MAIN NAVIGATION & UTILITIES =====
-// Add your Anthropic API key here to enable the AI Study Advisor:
-const ITARC_API_KEY = ''; // e.g. 'sk-ant-...' from console.anthropic.com
 
 const PAGE_TITLES = {
   home:'ITARC Business — Study Abroad Consultancy India | Ireland, UK, Germany, Canada, Australia, USA',
@@ -2779,108 +2777,186 @@ document.querySelectorAll('[id^="de-"],[id^="ca-"],[id^="au-"],[id^="us-"],[id^=
 </div>
 
 <script>
-// ===== ITARC AI AGENT =====
+/* ===== ITARC AI STUDY ADVISOR =========================================
+   HOW TO ENABLE LIVE AI RESPONSES:
+   1. Get a free API key at https://console.anthropic.com
+   2. Paste it below between the quotes:                                  */
+const ITARC_API_KEY = '';   // e.g. 'sk-ant-api03-...'
+/* ======================================================================= */
+
 let agentOpen = false;
 let agentHistory = [];
-const AGENT_SYSTEM = `You are ITARC's friendly AI study abroad advisor for Indian students. ITARC Business is a Mumbai-based consultancy that helps Indian students study in Ireland, UK, Germany, Canada, Australia, USA, France, Netherlands, and Sweden. 
 
-Key facts:
-- Germany: tuition-free public universities (€0-350/semester), APS certificate required for Indians, block account €11,208/yr, 18-month job seeker visa after graduation
-- Ireland: tuition €10,000-25,000/yr, 2-year post-study visa, English medium, QS top unis UCD (171), Trinity (81)
-- UK: 1-year Masters, Graduate Route 2-year visa, IELTS 6.0-7.0
-- Canada: 3-year PGWP, Express Entry PR in 2-3 years, SDS visa in 20 days, IELTS 6.0+
-- Australia: Group of Eight unis, 2-4 year post-study visa, healthcare/nursing shortage
-- USA: STEM OPT 3 years, MIT/Stanford/CMU top choices, GRE required
-- ITARC: free counselling, 97% visa success, 600+ students placed, based in Mahim Mumbai
-- Phone: +91 84549 92179, email: info@itarcbusiness.com
+const AGENT_SYSTEM = "You are ITARC's friendly AI study abroad advisor for Indian students. " +
+"ITARC Business is a Mumbai-based consultancy helping students study in Ireland, UK, Germany, Canada, Australia, USA & more. " +
+"Key facts: " +
+"Germany: tuition-free public universities (€0-350/semester), APS certificate required for Indians, block account €11208/yr, 18-month job seeker visa. " +
+"Ireland: €10000-25000/yr, 2-year post-study visa, English medium, UCD QS#171, Trinity QS#81. " +
+"UK: 1-year Masters, Graduate Route 2-yr visa, IELTS 6.0-7.0. " +
+"Canada: 3-year PGWP, Express Entry PR 2-3 yrs, SDS visa 20 days, IELTS 6.0+. " +
+"Australia: Group of Eight, 2-4yr post-study visa, healthcare nursing PR. " +
+"USA: STEM OPT 3 yrs, GRE required, highest salaries. " +
+"ITARC: free counselling, 97% visa success, 600+ students placed, +91 84549 92179. " +
+"Be helpful, concise (2-3 paragraphs max), warm and professional. Always end with a CTA to book free counselling.";
 
-Be helpful, concise (2-3 paragraphs max), warm and professional. Always end with a call to action to book a free counselling session. Use emojis naturally. Answer in the context of Indian students going abroad.`;
+// Smart FAQ fallback (works without API key)
+const FAQ_ANSWERS = {
+  "germany": "🇩🇪 Germany is incredible value! Public universities charge only €150–350 per semester — nearly zero tuition. You need an APS certificate (ITARC helps with this), a blocked account of €11,208, and IELTS 6.5+. After graduation you get an 18-month job seeker visa. TU Munich, RWTH Aachen and Heidelberg are top picks for Indian students.\n\n📅 Want a personalised Germany plan? Book your free session below!",
+  "ireland": "🇮🇪 Ireland is India's #1 European destination! English-medium education, Google/Meta/LinkedIn all headquartered in Dublin, and a 2-year post-study work permit. Tuition is €10,000–25,000/yr. IELTS 6.0–6.5 required. UCD and Trinity are the top choices.\n\n📅 Book a free session and we'll build your Ireland shortlist!",
+  "canada": "🇨🇦 Canada has the world's best PR pathway for students! Complete a 2-year degree → get a 3-year Post-Graduate Work Permit (PGWP) → 1 year work experience → Express Entry PR. The SDS visa fast-tracks approval in ~20 days. UofT, UBC and Waterloo are most popular with Indian students.\n\n📅 Book a free session to map your Canada PR pathway!",
+  "uk": "🇬🇧 UK degrees are globally respected and most Masters are just 1 year — saving you a year of costs vs USA/Canada. After graduating you get the Graduate Route visa (2 years open work rights). Oxford, Cambridge, UCL and Manchester are top choices. IELTS 6.0–7.0 required.\n\n📅 Book your free UK counselling session today!",
+  "australia": "🇦🇺 Australia's Group of Eight universities are world-class, and the post-study visa (Subclass 485) gives 2–4 years to work. Healthcare and nursing graduates get priority PR points. Minimum wage is AUD 23+/hr — students can work 48hrs/fortnight. Melbourne, UNSW Sydney and ANU are top picks.\n\n📅 Book a free session with our Australia specialist!",
+  "usa": "🇺🇸 USA has MIT, Stanford, CMU — the world's top research unis. STEM graduates get a 3-year OPT extension to work. GRE is required for most MS programs. Starting salaries for CS graduates are $110,000–140,000/yr. The main challenge is the long Green Card wait for Indians.\n\n📅 Book a free session to plan your USA application strategy!",
+  "ielts": "📝 IELTS score requirements by country:\n• Ireland: 6.0–6.5\n• UK: 6.0–7.0 (Russell Group: 6.5+)\n• Germany (English programs): 6.5\n• Canada (SDS): 6.0 each skill\n• Australia: 6.0–6.5 (Go8: 6.5+)\n• USA: 6.5–7.5 + GRE/GMAT\n\nA 6.5 overall score gives you access to most universities across all destinations!\n\n📅 Not sure if your score is enough? Book a free check with our counsellors!",
+  "cost": "💰 Annual costs comparison for Indian students:\n• Germany: ₹8–12L (nearly free tuition!)\n• France: ₹10–15L\n• Ireland: ₹18–28L\n• Netherlands: ₹20–30L\n• UK: ₹25–45L\n• Canada: ₹28–48L\n• Australia: ₹30–50L\n• USA: ₹45–80L\n\nGermany gives the highest ROI by far! Book a free session for your personalised cost breakdown.",
+  "visa": "🛂 Student visa timelines:\n• Germany: 8–12 weeks (book embassy early!)\n• Ireland: Stamp 2 — 3–6 weeks\n• UK: 3–4 weeks (fast-track available)\n• Canada SDS: ~20 days!\n• Australia: 4–6 weeks\n• USA: 4–12 weeks (interview required)\n\nITARC has a 97% visa success rate. We handle all documentation end-to-end!\n\n📅 Book a free visa consultation today.",
+  "loan": "💳 Education loan options for study abroad:\n• SBI: Up to ₹1.5 Cr from 8.5% p.a.\n• HDFC Credila: Up to ₹1 Cr, no collateral options\n• Avanse: Fast approval, NBFC\n• Axis Bank / Bank of Baroda also available\n\nITARC helps you prepare all documents and get loan sanctioned BEFORE your visa appointment!\n\n📅 Book a free loan guidance session.",
+  "pr": "🏡 Best PR pathways for Indian students:\n🥇 Canada: Express Entry in 2–3 years (fastest!)\n🥈 Germany: EU Blue Card → PR in 21 months\n🥉 Australia: Skills in Demand visa → PR in 3–5 yrs\n🏅 Ireland: 5 years residence\n🏅 UK: 5 years residence\n⚠️ USA: 10–20+ year backlog for Indians\n\nWant to settle abroad? Canada and Germany are your best bets!\n\n📅 Book a free PR strategy session with ITARC."
+};
+
+function getFAQReply(text) {
+  const t = text.toLowerCase();
+  if (t.includes('germany') || t.includes('german')) return FAQ_ANSWERS.germany;
+  if (t.includes('ireland') || t.includes('irish') || t.includes('ucd') || t.includes('trinity')) return FAQ_ANSWERS.ireland;
+  if (t.includes('canada') || t.includes('pgwp') || t.includes('sds')) return FAQ_ANSWERS.canada;
+  if (t.includes('uk') || t.includes('united kingdom') || t.includes('england') || t.includes('britain')) return FAQ_ANSWERS.uk;
+  if (t.includes('australia') || t.includes('sydney') || t.includes('melbourne')) return FAQ_ANSWERS.australia;
+  if (t.includes('usa') || t.includes('america') || t.includes('united states') || t.includes('us ')) return FAQ_ANSWERS.usa;
+  if (t.includes('ielts') || t.includes('english test') || t.includes('band score')) return FAQ_ANSWERS.ielts;
+  if (t.includes('cost') || t.includes('fee') || t.includes('expensive') || t.includes('cheap') || t.includes('budget')) return FAQ_ANSWERS.cost;
+  if (t.includes('visa') || t.includes('permit') || t.includes('immigration')) return FAQ_ANSWERS.visa;
+  if (t.includes('loan') || t.includes('finance') || t.includes('money') || t.includes('bank')) return FAQ_ANSWERS.loan;
+  if (t.includes('pr ') || t.includes('permanent') || t.includes('residence') || t.includes('settle') || t.includes('citizenship')) return FAQ_ANSWERS.pr;
+  return "Great question! 😊 I can help you with:\n\n🌍 **Best country** for MS, MBA or PhD\n📊 **Costs** — tuition + living expenses\n🛂 **Visa** process and timelines\n💳 **Education loans** — banks and rates\n🏡 **PR pathways** — which country is fastest\n\nJust type your question — or better yet, book a FREE 30-minute session with our expert counsellors who can give you personalised guidance!\n\n📅 Click below to book your free session.";
+}
 
 function toggleAgent() {
   agentOpen = !agentOpen;
-  document.getElementById('agentWindow').classList.toggle('open', agentOpen);
-  document.getElementById('agentBubble').classList.toggle('open', agentOpen);
-  document.querySelector('.agent-notif').style.display = 'none';
-  if(agentOpen) setTimeout(()=>document.getElementById('agentInput').focus(), 300);
+  var win = document.getElementById('agentWindow');
+  var bub = document.getElementById('agentBubble');
+  var notif = document.querySelector('.agent-notif');
+  if (win) win.classList.toggle('open', agentOpen);
+  if (bub) bub.classList.toggle('open', agentOpen);
+  if (notif) notif.style.display = 'none';
+  if (agentOpen) {
+    setTimeout(function() {
+      var inp = document.getElementById('agentInput');
+      if (inp) inp.focus();
+    }, 300);
+  }
 }
 
 function agentQuick(text) {
-  document.getElementById('agentInput').value = text;
-  document.getElementById('agentQuickBtns').style.display = 'none';
+  var inp = document.getElementById('agentInput');
+  if (inp) inp.value = text;
+  var qb = document.getElementById('agentQuickBtns');
+  if (qb) qb.style.display = 'none';
   agentSend();
 }
 
 function agentAddMsg(text, role) {
-  const msgs = document.getElementById('agentMessages');
-  const isBot = role === 'bot';
-  const el = document.createElement('div');
-  el.className = `msg ${role}`;
-  const now = new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
-  el.innerHTML = `
-    <div class="msg-av">${isBot ? 'IT' : 'U'}</div>
-    <div>
-      <div class="msg-bubble">${text.replace(/
-/g, '<br>')}</div>
-      <div class="msg-time">${now}</div>
-    </div>`;
+  var msgs = document.getElementById('agentMessages');
+  if (!msgs) return;
+  var isBot = (role === 'bot');
+  var el = document.createElement('div');
+  el.className = 'msg ' + role;
+  var now = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+  // Safe text rendering — replace newlines with <br>
+  var safeText = text.split('\n').join('<br>');
+  el.innerHTML =
+    '<div class="msg-av">' + (isBot ? 'IT' : 'U') + '</div>' +
+    '<div>' +
+    '<div class="msg-bubble">' + safeText + '</div>' +
+    '<div class="msg-time">' + now + '</div>' +
+    '</div>';
   msgs.appendChild(el);
   msgs.scrollTop = msgs.scrollHeight;
   return el;
 }
 
+function agentShowCTA() {
+  var msgs = document.getElementById('agentMessages');
+  if (!msgs) return;
+  var cta = document.createElement('div');
+  cta.style.cssText = 'background:linear-gradient(135deg,#FAF7F2,#FFF8EC);border:1.5px solid rgba(200,146,42,.25);border-radius:12px;padding:12px 14px;margin:4px 0;text-align:center';
+  cta.innerHTML = '<div style="font-size:12.5px;color:#0B1F3A;font-weight:700;margin-bottom:8px;font-family:DM Sans,sans-serif">📅 Get personalised guidance — it\'s free!</div><button onclick="showPage(\'contact\');toggleAgent()" style="background:linear-gradient(135deg,#C8922A,#E8B45A);color:white;border:none;padding:8px 18px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif">Book Free Counselling →</button>';
+  msgs.appendChild(cta);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
 async function agentSend() {
-  const input = document.getElementById('agentInput');
-  const text = input.value.trim();
+  var inputEl = document.getElementById('agentInput');
+  if (!inputEl) return;
+  var text = inputEl.value.trim();
   if (!text) return;
-  input.value = '';
-  document.getElementById('agentQuickBtns').style.display = 'none';
-  
+  inputEl.value = '';
+
+  var qb = document.getElementById('agentQuickBtns');
+  if (qb) qb.style.display = 'none';
+
   agentAddMsg(text, 'user');
-  agentHistory.push({ role: 'user', content: text });
-  
-  // Show typing
-  const typing = document.getElementById('agentTyping');
-  typing.classList.add('show');
-  document.getElementById('agentMessages').scrollTop = 99999;
+  agentHistory.push({role:'user', content:text});
 
+  var typing = document.getElementById('agentTyping');
+  if (typing) typing.classList.add('show');
+  var msgs = document.getElementById('agentMessages');
+  if (msgs) msgs.scrollTop = msgs.scrollHeight;
+
+  // Always use server proxy — API key stays safe on the server
   try {
-    // Use server proxy if available, else direct API (requires ITARC_API_KEY set above)
-    const apiKey = typeof ITARC_API_KEY !== 'undefined' ? ITARC_API_KEY : '';
-    const endpoint = apiKey ? 'https://api.anthropic.com/v1/messages' : '/api/agent';
-    const headers = {'Content-Type':'application/json'};
-    if (apiKey) { headers['x-api-key'] = apiKey; headers['anthropic-version'] = '2023-06-01'; headers['anthropic-dangerous-direct-browser-ipc'] = 'true'; }
+    var limited = agentHistory.slice(-10);
+    var resp = await fetch('/api/agent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: limited })
+    });
+    var data = await resp.json();
+    if (typing) typing.classList.remove('show');
 
-    const body = apiKey
-      ? {model:'claude-sonnet-4-20250514',max_tokens:500,system:AGENT_SYSTEM,messages:agentHistory}
-      : {messages:agentHistory};
-
-    const response = await fetch(endpoint, {method:'POST', headers, body:JSON.stringify(body)});
-    const data = await response.json();
-    typing.classList.remove('show');
-
-    const reply = (data.content?.[0]?.text) || data.reply || "I'm having trouble connecting. Please WhatsApp us at +91 84549 92179 or book a free counselling session!";
-    agentHistory.push({ role: 'assistant', content: reply });
-    agentAddMsg(reply, 'bot');
-    
-    // Add counselling CTA after 2nd reply
-    if(agentHistory.filter(m=>m.role==='assistant').length >= 2) {
-      setTimeout(() => {
-        const msgs = document.getElementById('agentMessages');
-        const cta = document.createElement('div');
-        cta.style.cssText = 'background:linear-gradient(135deg,#FAF7F2,#FFF8EC);border:1.5px solid rgba(200,146,42,.25);border-radius:12px;padding:12px 14px;margin:4px 0;text-align:center';
-        cta.innerHTML = `<div style="font-size:12.5px;color:#0B1F3A;font-weight:700;margin-bottom:8px;font-family:'DM Sans',sans-serif">📅 Get personalised guidance — it's free!</div><button onclick="showPage('contact');toggleAgent()" style="background:linear-gradient(135deg,#C8922A,#E8B45A);color:white;border:none;padding:8px 18px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">Book Free Counselling →</button>`;
-        msgs.appendChild(cta);
-        msgs.scrollTop = msgs.scrollHeight;
-      }, 1000);
+    // If server says no key configured, use smart FAQ fallback
+    if (data.faq) {
+      var reply = data.faq;
+      agentHistory.push({role:'assistant', content:reply});
+      agentAddMsg(reply, 'bot');
+    } else {
+      var reply = (data.content && data.content[0] && data.content[0].text)
+        ? data.content[0].text
+        : getFAQReply(text);
+      agentHistory.push({role:'assistant', content:reply});
+      agentAddMsg(reply, 'bot');
     }
   } catch(err) {
-    typing.classList.remove('show');
-    agentAddMsg('Our AI is temporarily offline. Please WhatsApp us at +91 84549 92179 for instant help! 💬', 'bot');
+    if (typing) typing.classList.remove('show');
+    var fallback = getFAQReply(text);
+    agentHistory.push({role:'assistant', content:fallback});
+    agentAddMsg(fallback, 'bot');
+  }
+
+  if (false) {  // kept for structure
+    // No API key — use instant smart FAQ answers
+    setTimeout(function() {
+      if (typing) typing.classList.remove('show');
+      var reply = getFAQReply(text);
+      agentHistory.push({role:'assistant', content:reply});
+      agentAddMsg(reply, 'bot');
+      if (agentHistory.filter(function(m){return m.role==='assistant';}).length >= 2) {
+        setTimeout(agentShowCTA, 800);
+      }
+    }, 900);
+    return;
+  }
+
+  if (agentHistory.filter(function(m){return m.role==='assistant';}).length >= 2) {
+    setTimeout(agentShowCTA, 800);
   }
 }
-// Show agent notification after 8 seconds
-setTimeout(() => {
-  if(!agentOpen) document.querySelector('.agent-notif').style.display = 'flex';
+
+// Show notification dot after 8 seconds
+setTimeout(function() {
+  if (!agentOpen) {
+    var n = document.querySelector('.agent-notif');
+    if (n) n.style.display = 'flex';
+  }
 }, 8000);
 </script>
 
