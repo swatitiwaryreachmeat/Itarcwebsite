@@ -78,44 +78,42 @@ async function createStudentFolder(studentName, country, level, course) {
   };
 }
 
-// ── Upload file via REST API ──────────────────────
+// ── Upload file via multipart REST API ───────────
 async function uploadFileToDrive(fileBuffer, fileName, mimeType, folderId) {
   const token = await getAccessToken();
+  const fileMime = mimeType || 'application/octet-stream';
 
-  // Step 1: Initiate resumable upload
-  const initRes = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,name,webViewLink',
+  // Build multipart body manually
+  const boundary = '-------ITARC_BOUNDARY_' + Date.now();
+  const metadata = JSON.stringify({ name: fileName, parents: [folderId] });
+
+  const bodyParts = [
+    '--' + boundary + '\r\n',
+    'Content-Type: application/json; charset=UTF-8\r\n\r\n',
+    metadata + '\r\n',
+    '--' + boundary + '\r\n',
+    'Content-Type: ' + fileMime + '\r\n\r\n'
+  ];
+
+  const pre = Buffer.from(bodyParts.join(''));
+  const post = Buffer.from('\r\n--' + boundary + '--');
+  const body = Buffer.concat([pre, fileBuffer, post]);
+
+  const res = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,name,webViewLink',
     {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-        'X-Upload-Content-Type': mimeType || 'application/octet-stream',
-        'X-Upload-Content-Length': String(fileBuffer.length)
+        'Content-Type': 'multipart/related; boundary=' + boundary,
+        'Content-Length': String(body.length)
       },
-      body: JSON.stringify({
-        name: fileName,
-        parents: [folderId]
-      })
+      body: body
     }
   );
 
-  const uploadUrl = initRes.headers.get('location');
-  if (!uploadUrl) throw new Error('No upload URL from Google Drive');
-
-  // Step 2: Upload file bytes
-  const uploadRes = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': mimeType || 'application/octet-stream',
-      'Content-Length': String(fileBuffer.length)
-    },
-    body: fileBuffer
-  });
-
-  const uploaded = await uploadRes.json();
+  const uploaded = await res.json();
   if (uploaded.error) throw new Error('Upload failed: ' + uploaded.error.message);
-
   return { id: uploaded.id, name: uploaded.name, webViewLink: uploaded.webViewLink };
 }
 
@@ -176,28 +174,25 @@ app.get('/test-drive', async (req, res) => {
     if (folder.error) throw new Error('Folder error: ' + folder.error.message);
     results.step2 = 'Folder OK: ' + folder.id;
 
-    results.step3 = 'Uploading test file...';
-    const buf = Buffer.from('hello itarc');
-    const initRes = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,name',
+    results.step3 = 'Uploading test file (multipart)...';
+    const buf = Buffer.from('hello itarc test');
+    const boundary = 'TESTBOUNDARY123';
+    const meta = JSON.stringify({ name: 'test.txt', parents: [folder.id] });
+    const pre = Buffer.from('--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + meta + '\r\n--' + boundary + '\r\nContent-Type: text/plain\r\n\r\n');
+    const post = Buffer.from('\r\n--' + boundary + '--');
+    const body = Buffer.concat([pre, buf, post]);
+    const uploadRes = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,name',
       {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ' + token,
-          'Content-Type': 'application/json',
-          'X-Upload-Content-Type': 'text/plain',
-          'X-Upload-Content-Length': String(buf.length)
+          'Content-Type': 'multipart/related; boundary=' + boundary,
+          'Content-Length': String(body.length)
         },
-        body: JSON.stringify({ name: 'test.txt', parents: [folder.id] })
+        body: body
       }
     );
-    const uploadUrl = initRes.headers.get('location');
-    if (!uploadUrl) throw new Error('No upload URL');
-    const uploadRes = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'text/plain', 'Content-Length': String(buf.length) },
-      body: buf
-    });
     const uploaded = await uploadRes.json();
     if (uploaded.error) throw new Error('Upload error: ' + uploaded.error.message);
     results.step3 = 'File OK: ' + uploaded.id;
