@@ -47,25 +47,31 @@ function getDriveClient() {
 
 async function createStudentFolder(drive, studentName, country, level, course) {
   const year = new Date().getFullYear();
-  // Sanitise name for folder: "2025-Arjun-Desai-Ireland-MS"
   const safeName = studentName.replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/\s+/g,'-');
   const safeCountry = country.replace(/\s+/g,'-');
   const levelShort = { "Bachelor's":'BSc', "Master's":'MS', "MBA":'MBA', "PhD":'PhD' }[level] || level;
   const folderName = `${year}-${safeName}-${safeCountry}-${levelShort}`;
 
+  // Step 1: Create folder WITHOUT parents (avoids service account quota error)
   const folder = await drive.files.create({
-    supportsAllDrives: true,
     requestBody: {
       name: folderName,
-      mimeType: 'application/vnd.google-apps.folder',
-      parents: [process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID]
+      mimeType: 'application/vnd.google-apps.folder'
     },
     fields: 'id,name'
   });
 
-  // Make folder readable by anyone with link (counsellors can open it)
-  await drive.permissions.create({
+  // Step 2: Move the folder into the shared parent using update (not create)
+  await drive.files.update({
+    fileId: folder.data.id,
+    addParents: process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID,
+    removeParents: 'root',
     supportsAllDrives: true,
+    fields: 'id,parents'
+  });
+
+  // Step 3: Make folder readable by anyone with the link
+  await drive.permissions.create({
     fileId: folder.data.id,
     requestBody: { role: 'reader', type: 'anyone' }
   });
@@ -81,17 +87,23 @@ async function uploadFileToDrive(drive, fileBuffer, fileName, mimeType, folderId
   const bufferStream = new stream.PassThrough();
   bufferStream.end(fileBuffer);
 
+  // Upload to service account root first (avoids storage quota error)
   const uploaded = await drive.files.create({
-    supportsAllDrives: true,          // ← required for shared/My Drive folders
-    requestBody: {
-      name: fileName,
-      parents: [folderId]
-    },
+    requestBody: { name: fileName },
     media: {
       mimeType: mimeType || 'application/octet-stream',
       body: bufferStream
     },
     fields: 'id,name,webViewLink'
+  });
+
+  // Then move into the shared student folder
+  await drive.files.update({
+    fileId: uploaded.data.id,
+    addParents: folderId,
+    removeParents: 'root',
+    supportsAllDrives: true,
+    fields: 'id,parents'
   });
 
   return uploaded.data;
