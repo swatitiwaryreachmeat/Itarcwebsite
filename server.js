@@ -52,61 +52,83 @@ async function createStudentFolder(drive, studentName, country, level, course) {
   const levelShort = { "Bachelor's":'BSc', "Master's":'MS', "MBA":'MBA', "PhD":'PhD' }[level] || level;
   const folderName = `${year}-${safeName}-${safeCountry}-${levelShort}`;
 
-  // Step 1: Create folder WITHOUT parents (avoids service account quota error)
-  const folder = await drive.files.create({
-    requestBody: {
-      name: folderName,
-      mimeType: 'application/vnd.google-apps.folder'
+  // Use multipart upload via fetch directly — bypasses googleapis client quota check
+  const accessToken = await drive.context._options.auth.getAccessToken();
+  const token = accessToken.token || accessToken;
+
+  // Create folder inside parent folder directly
+  const res = await fetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true&fields=id,name', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
     },
-    fields: 'id,name'
+    body: JSON.stringify({
+      name: folderName,
+      mimeType: 'application/vnd.google-apps.folder',
+      parents: [process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID]
+    })
   });
 
-  // Step 2: Move the folder into the shared parent using update (not create)
-  await drive.files.update({
-    fileId: folder.data.id,
-    addParents: process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID,
-    removeParents: 'root',
-    supportsAllDrives: true,
-    fields: 'id,parents'
-  });
+  const folder = await res.json();
+  if (folder.error) throw new Error(folder.error.message);
 
-  // Step 3: Make folder readable by anyone with the link
-  await drive.permissions.create({
-    fileId: folder.data.id,
-    requestBody: { role: 'reader', type: 'anyone' }
+  // Make folder readable by anyone with the link
+  await fetch(\`https://www.googleapis.com/drive/v3/files/\${folder.id}/permissions?supportsAllDrives=true\`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ role: 'reader', type: 'anyone' })
   });
 
   return {
-    folderId: folder.data.id,
+    folderId: folder.id,
     folderName,
-    folderLink: `https://drive.google.com/drive/folders/${folder.data.id}`
+    folderLink: \`https://drive.google.com/drive/folders/\${folder.id}\`
   };
 }
 
 async function uploadFileToDrive(drive, fileBuffer, fileName, mimeType, folderId) {
-  const bufferStream = new stream.PassThrough();
-  bufferStream.end(fileBuffer);
+  const accessToken = await drive.context._options.auth.getAccessToken();
+  const token = accessToken.token || accessToken;
 
-  // Upload to service account root first (avoids storage quota error)
-  const uploaded = await drive.files.create({
-    requestBody: { name: fileName },
-    media: {
-      mimeType: mimeType || 'application/octet-stream',
-      body: bufferStream
+  // Step 1: Initiate resumable upload directly into the parent folder
+  const initRes = await fetch(
+    \`https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,name,webViewLink\`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'X-Upload-Content-Type': mimeType || 'application/octet-stream',
+        'X-Upload-Content-Length': fileBuffer.length
+      },
+      body: JSON.stringify({
+        name: fileName,
+        parents: [folderId]
+      })
+    }
+  );
+
+  const uploadUrl = initRes.headers.get('location');
+  if (!uploadUrl) throw new Error('Failed to get upload URL from Google Drive');
+
+  // Step 2: Upload the actual file bytes
+  const uploadRes = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': mimeType || 'application/octet-stream',
+      'Content-Length': fileBuffer.length
     },
-    fields: 'id,name,webViewLink'
+    body: fileBuffer
   });
 
-  // Then move into the shared student folder
-  await drive.files.update({
-    fileId: uploaded.data.id,
-    addParents: folderId,
-    removeParents: 'root',
-    supportsAllDrives: true,
-    fields: 'id,parents'
-  });
+  const uploaded = await uploadRes.json();
+  if (uploaded.error) throw new Error(uploaded.error.message);
 
-  return uploaded.data;
+  return { id: uploaded.id, name: uploaded.name, webViewLink: uploaded.webViewLink };
 }
 
 // ────────────────────────────────────────────────
@@ -449,46 +471,61 @@ app.get('/api/admin/stats', (req, res) => {
 app.get('/test-drive', async (req, res) => {
   const results = {};
   try {
-    // Test 1: Can we authenticate?
     results.step1 = 'Authenticating...';
     const drive = getDriveClient();
-    results.step1 = 'Auth OK';
+    const accessToken = await drive.context._options.auth.getAccessToken();
+    const token = accessToken.token || accessToken;
+    results.step1 = 'Auth OK — token starts: ' + token.substring(0,20);
 
-    // Test 2: Can we list files?
-    results.step2 = 'Listing files...';
-    const list = await drive.files.list({ pageSize: 1 });
-    results.step2 = 'List OK';
-
-    // Test 3: Can we create a file in root?
-    results.step3 = 'Creating test file...';
-    const f = await drive.files.create({
-      requestBody: { name: 'itarc-test.txt' },
-      media: { mimeType: 'text/plain', body: 'test' },
-      fields: 'id'
-    });
-    results.step3 = 'Create OK — id: ' + f.data.id;
-
-    // Test 4: Can we move it to the parent folder?
-    results.step4 = 'Moving to parent folder...';
+    results.step2 = 'Creating test folder in parent...';
     results.parentFolderId = process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID;
-    await drive.files.update({
-      fileId: f.data.id,
-      addParents: process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID,
-      removeParents: 'root',
-      supportsAllDrives: true,
-      fields: 'id,parents'
-    });
-    results.step4 = 'Move OK';
 
-    // Test 5: Delete the test file
-    await drive.files.delete({ fileId: f.data.id });
-    results.step5 = 'Cleanup OK';
+    const folderRes = await fetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true&fields=id,name', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: 'TEST-ITARC-' + Date.now(),
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID]
+      })
+    });
+
+    const folder = await folderRes.json();
+    if (folder.error) throw new Error('Folder error: ' + folder.error.message);
+    results.step2 = 'Folder created OK — id: ' + folder.id;
+
+    results.step3 = 'Uploading test file into folder...';
+    const initRes = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,name',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+          'X-Upload-Content-Type': 'text/plain',
+          'X-Upload-Content-Length': 4
+        },
+        body: JSON.stringify({ name: 'test.txt', parents: [folder.id] })
+      }
+    );
+    const uploadUrl = initRes.headers.get('location');
+    if (!uploadUrl) throw new Error('No upload URL returned');
+
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'text/plain', 'Content-Length': 4 },
+      body: 'test'
+    });
+    const uploaded = await uploadRes.json();
+    if (uploaded.error) throw new Error('Upload error: ' + uploaded.error.message);
+    results.step3 = 'File uploaded OK — id: ' + uploaded.id;
 
     res.json({ success: true, results });
   } catch(e) {
     results.error = e.message;
-    results.errorCode = e.code;
-    results.errorDetails = e.errors;
     res.json({ success: false, results });
   }
 });
