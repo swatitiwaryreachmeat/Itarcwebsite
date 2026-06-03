@@ -2663,6 +2663,16 @@ function showPage(name) {
   if (navEl) navEl.classList.add('active');
   window.scrollTo({top:0, behavior:'smooth'});
   if (PAGE_TITLES[name]) document.title = PAGE_TITLES[name];
+  // Update URL without page reload
+  const urlMap = {
+    home: '/', education: '/study-abroad', immigration: '/visa',
+    financial: '/education-loan', it: '/travel', contact: '/counselling',
+    compare: '/compare',
+    'guide-ireland': '/guides/ireland', 'guide-germany': '/guides/germany',
+    'guide-canada': '/guides/canada', 'guide-uk': '/guides/uk',
+    'guide-visa': '/guides/visa-checklist', 'guide-ielts': '/guides/ielts'
+  };
+  if (urlMap[name]) history.pushState({ page: name }, '', urlMap[name]);
 }
 
 function showCountry(country) {
@@ -2672,7 +2682,35 @@ function showCountry(country) {
   if (page) { page.classList.add('active'); }
   window.scrollTo({top:0, behavior:'smooth'});
   if (COUNTRY_TITLES[country]) document.title = COUNTRY_TITLES[country];
+  history.pushState({ country: country }, '', '/study/' + country);
 }
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function(e) {
+  if (e.state && e.state.page) showPage(e.state.page);
+  else if (e.state && e.state.country) showCountry(e.state.country);
+  else showPage('home');
+});
+
+// On page load, show correct tab based on URL
+(function() {
+  const path = window.location.pathname;
+  const urlToPage = {
+    '/study-abroad': 'education', '/visa': 'immigration',
+    '/education-loan': 'financial', '/travel': 'it',
+    '/counselling': 'contact', '/compare': 'compare',
+    '/guides/ireland': 'guide-ireland', '/guides/germany': 'guide-germany',
+    '/guides/canada': 'guide-canada', '/guides/uk': 'guide-uk',
+    '/guides/visa-checklist': 'guide-visa', '/guides/ielts': 'guide-ielts'
+  };
+  const countryMatch = path.match(/^\/study\/(.+)$/);
+  if (countryMatch) {
+    showCountry(countryMatch[1]);
+  } else if (urlToPage[path]) {
+    showPage(urlToPage[path]);
+  }
+  // else stay on home (default)
+})();
 
 function scrollToSection(id) {
   const el = document.getElementById(id);

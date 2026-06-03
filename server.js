@@ -363,7 +363,20 @@ app.post('/api/admin/add-student', (req, res) => {
 // ── Static pages ──────────────────────────────────
 app.get('/upload', (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
 app.get('/admin',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
-app.get('*',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// ── SPA routes — all return index.html, JS handles display ──
+const spaRoutes = [
+  '/study-abroad', '/visa', '/education-loan', '/travel',
+  '/counselling', '/compare',
+  '/study/:country',
+  '/guides/ireland', '/guides/germany', '/guides/canada',
+  '/guides/uk', '/guides/visa-checklist', '/guides/ielts'
+];
+spaRoutes.forEach(route => {
+  app.get(route, (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+});
+
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // ── Start ─────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
