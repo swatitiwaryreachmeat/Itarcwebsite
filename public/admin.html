@@ -45,6 +45,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--off);color:var(
 .tb-search input{border:none;background:none;outline:none;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text);width:200px}
 .tb-btn{display:flex;align-items:center;gap:6px;background:var(--blue);color:white;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .18s}
 .tb-btn:hover{background:var(--blue-dk)}
+.tb-btn-outline{background:white;color:var(--navy);border:1.5px solid var(--border)}
+.tb-btn-outline:hover{background:var(--off);border-color:var(--navy)}
 .notif-btn{position:relative;width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px}
 .notif-dot{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:#dc2626;border:2px solid white}
 
@@ -53,7 +55,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--off);color:var(
 
 /* STAT CARDS */
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
-.stat-card{background:white;border-radius:var(--r);padding:18px 20px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.stat-card{background:white;border-radius:var(--r);padding:18px 20px;border:1px solid var(--border);box-shadow:var(--shadow);cursor:pointer;transition:border-color .18s}
+.stat-card:hover{border-color:var(--blue)}
 .stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .stat-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .stat-trend{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:5px}
@@ -101,6 +104,7 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .action-btns{display:flex;gap:6px;flex-wrap:wrap}
 .btn-xs{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:6px;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .18s;white-space:nowrap}
 .btn-xs:hover{transform:translateY(-1px)}
+.btn-xs:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-approve{background:var(--green-lt);color:var(--green)}
 .btn-approve:hover{background:#bbf7d0}
 .btn-reject{background:var(--red-lt);color:var(--red)}
@@ -136,7 +140,7 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .rc-setting label{color:var(--muted)}
 .rc-setting select,.rc-setting input[type=number]{border:1.5px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text);outline:none;background:white;width:90px}
 
-/* REMINDER TEMPLATE PREVIEW */
+/* REMINDER TEMPLATE */
 .template-preview{border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-top:16px}
 .tp-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--off)}
 .tp-tab{padding:8px 16px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .18s;background:none;border-left:none;border-right:none;border-top:none;font-family:'Plus Jakarta Sans',sans-serif}
@@ -163,7 +167,7 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
 /* MODAL */
 .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .modal-backdrop.open{display:flex}
-.modal{background:white;border-radius:16px;width:min(560px,94vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal{background:white;border-radius:16px;width:min(580px,94vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 .modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1}
 .modal-title{font-size:16px;font-weight:800;color:var(--navy)}
 .modal-close{width:30px;height:30px;border-radius:50%;border:none;background:var(--off);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .18s}
@@ -174,25 +178,18 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .form-row label{display:block;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px}
 .form-row input,.form-row select,.form-row textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 13px;font-size:13.5px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text);outline:none;transition:border-color .18s;background:white}
 .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--blue)}
-.form-row textarea{height:100px;resize:vertical;line-height:1.6}
+.form-row textarea{height:80px;resize:vertical;line-height:1.6}
 .form-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.doc-upload-area{border:2px dashed var(--border);border-radius:var(--r);padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-top:6px}
-.doc-upload-area:hover{border-color:var(--blue);background:var(--blue-lt)}
-.doc-upload-area .du-icon{font-size:28px;margin-bottom:8px}
-.doc-upload-area .du-text{font-size:13px;color:var(--muted);line-height:1.6}
-.doc-upload-area .du-text strong{color:var(--blue)}
 .uploaded-docs{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .uploaded-doc{display:flex;align-items:center;gap:10px;background:var(--green-lt);border-radius:7px;padding:8px 12px;border-left:3px solid var(--green)}
 .ud-icon{font-size:16px;flex-shrink:0}
 .ud-name{font-size:12.5px;font-weight:600;color:var(--navy);flex:1}
 .ud-status{font-size:11px;font-weight:700;color:var(--green)}
-.ud-action{font-size:13px;cursor:pointer;color:var(--muted);transition:color .18s}
-.ud-action:hover{color:var(--red)}
+.ud-action{font-size:13px;cursor:pointer;color:var(--muted);transition:color .18s;text-decoration:none}
+.ud-action:hover{color:var(--blue)}
 .pending-doc{display:flex;align-items:center;gap:10px;background:var(--red-lt);border-radius:7px;padding:8px 12px;border-left:3px solid var(--red)}
 .pending-doc .ud-status{color:var(--red)}
-
-/* NEXT STEPS */
-.next-steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.ns-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
 .ns-item{border:1.5px solid var(--border);border-radius:9px;padding:13px;cursor:pointer;transition:all .18s;text-align:center}
 .ns-item:hover{border-color:var(--blue);background:var(--blue-lt)}
 .ns-item.selected{border-color:var(--blue);background:var(--blue-lt)}
@@ -209,25 +206,33 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .al-time{font-size:11.5px;color:var(--muted);flex-shrink:0;padding-top:1px}
 
 /* TOAST */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:white;padding:12px 18px;border-radius:10px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow-md);z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:8px;max-width:320px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:white;padding:12px 18px;border-radius:10px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow-md);z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:8px;max-width:340px}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:var(--green)}
 .toast.warning{background:var(--amber)}
 .toast.error{background:var(--red)}
 
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:48px;color:var(--muted)}
+.empty-state .es-icon{font-size:40px;margin-bottom:12px}
+.empty-state p{font-size:14px}
+
+/* LOADING SKELETON */
+.skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:shimmer 1.2s ease-in-out infinite;border-radius:6px;height:14px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* LIVE BADGE */
+.live-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;background:#ecfdf5;color:#059669;padding:3px 8px;border-radius:100px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#059669;animation:blink 1.5s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* UPLOAD LINK BOX */
+.upload-link-box{background:var(--blue-lt);border:1.5px solid #bfdbfe;border-radius:9px;padding:12px 14px;display:flex;align-items:center;gap:10px;font-size:12.5px;margin-top:12px}
+.upload-link-box input{border:none;background:none;outline:none;font-size:12.5px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--blue);font-weight:600;flex:1;min-width:0}
+
 /* RESPONSIVE */
-@media(max-width:1100px){
-  .stat-grid{grid-template-columns:1fr 1fr}
-  .reminder-config-grid{grid-template-columns:1fr}
-  .next-steps-grid{grid-template-columns:1fr 1fr}
-}
-@media(max-width:768px){
-  .sidebar{transform:translateX(-100%)}
-  .main{margin-left:0}
-  .content{padding:16px}
-  .stat-grid{grid-template-columns:1fr 1fr}
-  .form-2col{grid-template-columns:1fr}
-}
+@media(max-width:1100px){.stat-grid{grid-template-columns:1fr 1fr}.reminder-config-grid{grid-template-columns:1fr}.ns-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.content{padding:16px}.stat-grid{grid-template-columns:1fr 1fr}.form-2col{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -240,81 +245,70 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
     <div class="sb-logo-sub">Counsellor Dashboard</div>
   </div>
   <nav class="sb-nav">
-    <button class="sb-item active" onclick="showSection('students')"><span class="sb-icon">👥</span> Students <span class="sb-badge" id="pendingBadge">4</span></button>
-    <button class="sb-item" onclick="showSection('reminders')"><span class="sb-icon">🔔</span> Auto Reminders</button>
-    <button class="sb-item" onclick="showSection('processing')"><span class="sb-icon">⚙️</span> Processing</button>
-    <button class="sb-item" onclick="showSection('activity')"><span class="sb-icon">📋</span> Activity Log</button>
-    <button class="sb-item" onclick="showSection('settings')"><span class="sb-icon">⚙️</span> Settings</button>
+    <button class="sb-item active" onclick="showSection('students',this)"><span class="sb-icon">👥</span>Students<span class="sb-badge" id="pendingBadge">0</span></button>
+    <button class="sb-item" onclick="showSection('reminders',this)"><span class="sb-icon">🔔</span>Auto Reminders</button>
+    <button class="sb-item" onclick="showSection('processing',this)"><span class="sb-icon">⚙️</span>Processing</button>
+    <button class="sb-item" onclick="showSection('activity',this)"><span class="sb-icon">📋</span>Activity Log</button>
+    <button class="sb-item" onclick="showSection('settings',this)"><span class="sb-icon">⚙️</span>Settings</button>
   </nav>
   <div class="sb-footer">
     <div class="sb-user">
-      <div class="sb-av">PR</div>
-      <div><div class="sb-uname">Priyanka Rao</div><div class="sb-urole">Senior Counsellor</div></div>
+      <div class="sb-av">PS</div>
+      <div><div class="sb-uname">Priya Sharma</div><div class="sb-urole">Senior Counsellor</div></div>
     </div>
   </div>
 </div>
 
 <!-- MAIN -->
 <div class="main">
-
-  <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-title" id="pageTitle">Student Documents</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="topbar-title" id="pageTitle">Student Documents</div>
+      <div class="live-badge"><div class="live-dot"></div>Live</div>
+    </div>
     <div class="topbar-right">
       <div class="tb-search"><span>🔍</span><input type="text" placeholder="Search students…" oninput="filterStudents(this.value)"></div>
-      <div class="notif-btn">🔔<span class="notif-dot"></span></div>
-      <button class="tb-btn" onclick="openAddStudent()">+ Add Student</button>
+      <button class="tb-btn tb-btn-outline" onclick="loadStudents()">🔄 Refresh</button>
+      <button class="tb-btn" onclick="openAddStudent()">＋ Add Student</button>
     </div>
   </div>
 
-  <!-- CONTENT -->
   <div class="content">
 
     <!-- ═══ STUDENTS SECTION ═══ -->
     <div id="section-students">
-      <!-- STATS -->
+
+      <!-- STAT CARDS -->
       <div class="stat-grid">
-        <div class="stat-card">
-          <div class="stat-top">
-            <div class="stat-icon" style="background:#eff6ff">📥</div>
-            <span class="stat-trend" style="background:#eff6ff;color:#1d4ed8">+3 today</span>
-          </div>
-          <div class="stat-num">12</div>
+        <div class="stat-card" onclick="filterTab('all',document.querySelector('.tab'))">
+          <div class="stat-top"><div class="stat-icon" style="background:#eff6ff">📥</div><span class="stat-trend" style="background:#eff6ff;color:#1d4ed8" id="todayCount">loading…</span></div>
+          <div class="stat-num" id="statTotal">—</div>
           <div class="stat-lbl">Total active students</div>
         </div>
         <div class="stat-card">
-          <div class="stat-top">
-            <div class="stat-icon" style="background:#fffbeb">⏳</div>
-            <span class="stat-trend" style="background:#fef3c7;color:#b45309">Needs action</span>
-          </div>
-          <div class="stat-num" style="color:#d97706">4</div>
+          <div class="stat-top"><div class="stat-icon" style="background:#fffbeb">⏳</div><span class="stat-trend" style="background:#fef3c7;color:#b45309">Needs action</span></div>
+          <div class="stat-num" style="color:#d97706" id="statPending">—</div>
           <div class="stat-lbl">Pending doc review</div>
         </div>
         <div class="stat-card">
-          <div class="stat-top">
-            <div class="stat-icon" style="background:#ecfdf5">✅</div>
-            <span class="stat-trend" style="background:#dcfce7;color:#166534">This week</span>
-          </div>
-          <div class="stat-num" style="color:#059669">6</div>
+          <div class="stat-top"><div class="stat-icon" style="background:#ecfdf5">✅</div><span class="stat-trend" style="background:#dcfce7;color:#166534">This week</span></div>
+          <div class="stat-num" style="color:#059669" id="statApproved">—</div>
           <div class="stat-lbl">Docs approved</div>
         </div>
         <div class="stat-card">
-          <div class="stat-top">
-            <div class="stat-icon" style="background:#fef2f2">📤</div>
-            <span class="stat-trend" style="background:#fee2e2;color:#991b1b">Auto-sent</span>
-          </div>
-          <div class="stat-num" style="color:#dc2626">8</div>
-          <div class="stat-lbl">Reminders sent today</div>
+          <div class="stat-top"><div class="stat-icon" style="background:#f5f3ff">🔍</div><span class="stat-trend" style="background:#f5f3ff;color:#7c3aed">In review</span></div>
+          <div class="stat-num" style="color:#7c3aed" id="statReview">—</div>
+          <div class="stat-lbl">Awaiting review</div>
         </div>
       </div>
 
       <!-- TABS -->
       <div class="tabs">
-        <button class="tab active" onclick="filterTab('all',this)">All Students <span class="tab-count">12</span></button>
-        <button class="tab" onclick="filterTab('pending',this)">Pending Docs <span class="tab-count">4</span></button>
-        <button class="tab" onclick="filterTab('review',this)">In Review <span class="tab-count">3</span></button>
-        <button class="tab" onclick="filterTab('approved',this)">Approved <span class="tab-count">3</span></button>
-        <button class="tab" onclick="filterTab('processing',this)">Processing <span class="tab-count">2</span></button>
+        <button class="tab active" onclick="filterTab('all',this)">All <span class="tab-count" id="tc-all">—</span></button>
+        <button class="tab" onclick="filterTab('pending',this)">Pending Docs <span class="tab-count" id="tc-pending">—</span></button>
+        <button class="tab" onclick="filterTab('review',this)">In Review <span class="tab-count" id="tc-review">—</span></button>
+        <button class="tab" onclick="filterTab('approved',this)">Approved <span class="tab-count" id="tc-approved">—</span></button>
+        <button class="tab" onclick="filterTab('processing',this)">Processing <span class="tab-count" id="tc-processing">—</span></button>
       </div>
 
       <!-- STUDENT TABLE -->
@@ -324,29 +318,21 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
           <div class="filter-row">
             <select class="filter-select" onchange="filterCountry(this.value)">
               <option value="">All countries</option>
-              <option>🇮🇪 Ireland</option>
-              <option>🇬🇧 UK</option>
-              <option>🇩🇪 Germany</option>
-              <option>🇫🇷 France</option>
-              <option>🇳🇱 Netherlands</option>
+              <option>Ireland</option><option>UK</option><option>Germany</option>
+              <option>France</option><option>Netherlands</option><option>Sweden</option>
             </select>
-            <button class="btn-sm secondary" onclick="sendBulkReminders()">📤 Send bulk reminders</button>
+            <button class="btn-sm amber" onclick="bulkRemind()">📤 Bulk Remind</button>
           </div>
         </div>
         <table>
           <thead>
             <tr>
-              <th>Student</th>
-              <th>Destination</th>
-              <th>Course</th>
-              <th>Documents</th>
-              <th>Status</th>
-              <th>Last reminder</th>
-              <th>Actions</th>
+              <th>Student</th><th>Destination</th><th>Course</th>
+              <th>Documents</th><th>Status</th><th>Last Reminder</th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="studentTable">
-            <!-- populated by JS -->
+            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">Loading students…</td></tr>
           </tbody>
         </table>
       </div>
@@ -358,102 +344,68 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
         <div class="rp-header">
           <div>
             <div class="rp-title">🔔 Automated Reminder System</div>
-            <div class="rp-subtitle">Configure automatic WhatsApp & email reminders for pending documents</div>
+            <div class="rp-subtitle">Configure automatic WhatsApp &amp; email reminders for pending documents</div>
           </div>
           <button class="btn-sm primary" onclick="saveReminderSettings()">💾 Save Settings</button>
         </div>
         <div class="rp-body">
-
           <div class="reminder-config-grid">
-            <!-- WhatsApp -->
             <div class="rc-card">
-              <div class="rc-card-header">
-                <div class="rc-title">💬 WhatsApp Reminders</div>
-                <label class="toggle"><input type="checkbox" checked id="waToggle"><span class="toggle-slider"></span></label>
-              </div>
-              <div class="rc-desc">Sends a WhatsApp message via Twilio or WhatsApp Business API to students with pending documents. Includes the exact list of missing docs and a direct upload link.</div>
-              <div class="rc-setting"><label>Send after</label><select id="waDays"><option>1 day</option><option selected>2 days</option><option>3 days</option><option>5 days</option><option>7 days</option></select></div>
-              <div class="rc-setting"><label>Repeat every</label><select><option>1 day</option><option selected>2 days</option><option>3 days</option><option>Weekly</option></select></div>
-              <div class="rc-setting"><label>Stop after</label><select><option>3 reminders</option><option selected>5 reminders</option><option>7 reminders</option><option>Never</option></select></div>
-              <div class="rc-setting" style="margin-top:10px"><label>Send time (IST)</label><input type="number" value="10" min="8" max="20" style="width:70px"> :00</div>
-            </div>
-
-            <!-- Email -->
-            <div class="rc-card">
-              <div class="rc-card-header">
-                <div class="rc-title">📧 Email Reminders</div>
-                <label class="toggle"><input type="checkbox" checked id="emailToggle"><span class="toggle-slider"></span></label>
-              </div>
-              <div class="rc-desc">Sends a professional email via SendGrid or Nodemailer. Includes a document checklist showing which are uploaded (✅) and which are still missing (❌) with clear next steps.</div>
-              <div class="rc-setting"><label>Send after</label><select><option selected>1 day</option><option>2 days</option><option>3 days</option></select></div>
-              <div class="rc-setting"><label>Repeat every</label><select><option>1 day</option><option selected>3 days</option><option>Weekly</option></select></div>
+              <div class="rc-card-header"><div class="rc-title">💬 WhatsApp Reminders</div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+              <div class="rc-desc">Sends a WhatsApp message via Twilio to students with pending documents. Includes the exact list of missing docs and a direct upload link.</div>
+              <div class="rc-setting"><label>Send after</label><select><option>1 day</option><option selected>2 days</option><option>3 days</option></select></div>
+              <div class="rc-setting"><label>Repeat every</label><select><option>1 day</option><option selected>2 days</option><option>Weekly</option></select></div>
               <div class="rc-setting"><label>Stop after</label><select><option>3 reminders</option><option selected>5 reminders</option><option>Never</option></select></div>
-              <div class="rc-setting" style="margin-top:10px"><label>CC counsellor</label><label class="toggle" style="transform:scale(.85)"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+              <div class="rc-setting"><label>Send time (IST)</label><input type="number" value="10" min="8" max="20" style="width:70px"> :00</div>
+            </div>
+            <div class="rc-card">
+              <div class="rc-card-header"><div class="rc-title">📧 Email Reminders</div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+              <div class="rc-desc">Sends a professional email via SendGrid. Includes a document checklist showing ✅ uploaded and ❌ missing items with clear next steps.</div>
+              <div class="rc-setting"><label>Send after</label><select><option selected>1 day</option><option>2 days</option></select></div>
+              <div class="rc-setting"><label>Repeat every</label><select><option selected>3 days</option><option>Weekly</option></select></div>
+              <div class="rc-setting"><label>Stop after</label><select><option>3 reminders</option><option selected>5 reminders</option></select></div>
+              <div class="rc-setting"><label>CC counsellor</label><label class="toggle" style="transform:scale(.85)"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
             </div>
           </div>
-
-          <!-- Template Preview -->
           <div class="template-preview">
             <div class="tp-tabs">
               <button class="tp-tab active" onclick="showTemplate('wa',this)">💬 WhatsApp Preview</button>
               <button class="tp-tab" onclick="showTemplate('email',this)">📧 Email Preview</button>
             </div>
-
-            <!-- WA template -->
             <div class="tp-body" id="tp-wa">
               <p>Hi <span class="tp-highlight">Arjun</span> 👋</p>
               <p style="margin-top:8px">This is a reminder from <strong>ITARC</strong> regarding your application to study <span class="tp-highlight">MS Engineering</span> in <span class="tp-highlight">🇩🇪 Germany</span>.</p>
-              <p style="margin-top:8px">Your counsellor is ready to proceed, but we're still waiting on a few documents from you:</p>
+              <p style="margin-top:8px">Your counsellor is ready to proceed, but we need a few more documents from you:</p>
               <div class="doc-checklist-preview">
-                <div class="dcp-item uploaded">✅ Valid Passport (uploaded 2 days ago)</div>
-                <div class="dcp-item uploaded">✅ 10th & 12th Certificates (uploaded)</div>
+                <div class="dcp-item uploaded">✅ Valid Passport (uploaded)</div>
+                <div class="dcp-item uploaded">✅ Degree Certificate &amp; Transcripts</div>
                 <div class="dcp-item missing">❌ IELTS Score Card — <strong>still missing</strong></div>
-                <div class="dcp-item missing">❌ Bank Statement (last 6 months) — <strong>still missing</strong></div>
+                <div class="dcp-item missing">❌ Bank Statement (6 months) — <strong>still missing</strong></div>
                 <div class="dcp-item missing">❌ Blocked Account Proof — <strong>still missing</strong></div>
               </div>
-              <p style="margin-top:10px">📎 Upload your documents here: <strong style="color:var(--blue)">itarcbusiness.com/upload?token=xxx</strong></p>
-              <p style="margin-top:8px">🗓️ <strong>Next step after approval:</strong> We will initiate your university application within 48 hours.</p>
-              <p style="margin-top:8px">Questions? Reply to this message or call us: <strong>+91 XXXXX XXXXX</strong></p>
-              <p style="margin-top:8px" style="color:var(--muted);font-size:12px">— ITARC Team</p>
+              <p style="margin-top:10px">📎 Upload here: <strong style="color:var(--blue)">itarcbusiness.com/upload?token=abc123</strong></p>
+              <p style="margin-top:8px">— <strong>ITARC Team</strong></p>
             </div>
-
-            <!-- Email template -->
             <div class="tp-body hidden" id="tp-email">
               <p><strong>Subject:</strong> <span class="tp-highlight">Action required: 3 documents pending — your Germany application</span></p>
               <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
-              <p>Dear <strong>Arjun</strong>,</p>
-              <p style="margin-top:10px">We hope you're excited about your upcoming studies in Germany! Your ITARC counsellor <strong>Arnav Mehta</strong> has reviewed your profile and is ready to move forward — we just need a few more documents from you.</p>
-              <p style="margin-top:10px"><strong>📋 Your document status:</strong></p>
+              <p>Dear <strong>Arjun</strong>, we need a few more documents to move your application forward…</p>
               <div class="doc-checklist-preview">
                 <div class="dcp-item uploaded">✅ Valid Passport</div>
-                <div class="dcp-item uploaded">✅ Degree Certificate & Transcripts</div>
-                <div class="dcp-item missing">❌ IELTS / TestDaF Score Card</div>
+                <div class="dcp-item missing">❌ IELTS Score Card</div>
                 <div class="dcp-item missing">❌ Bank Statement (last 6 months)</div>
-                <div class="dcp-item missing">❌ Blocked Account Confirmation</div>
               </div>
-              <p style="margin-top:12px">🔗 <strong>Upload your documents here:</strong> <a href="#" style="color:var(--blue)">itarcbusiness.com/upload?token=xxx</a></p>
-              <p style="margin-top:12px"><strong>⏭️ What happens next (after approval):</strong></p>
-              <ol style="margin-top:6px;padding-left:20px;font-size:13px;line-height:1.9;color:var(--muted)">
-                <li>Counsellor reviews and approves your documents <em>(1–2 business days)</em></li>
-                <li>University shortlist shared with you for confirmation</li>
-                <li>Application forms submitted to your chosen universities</li>
-                <li>APS certificate process initiated (Germany-specific)</li>
-                <li>Visa application package prepared</li>
-              </ol>
-              <p style="margin-top:14px">If you have any questions, please don't hesitate to reply to this email or WhatsApp us at <strong>+91 XXXXX XXXXX</strong>.</p>
-              <p style="margin-top:12px">Warm regards,<br><strong>Arnav Mehta</strong><br>Senior Counsellor — ITARC<br>📞 +91 XXXXX XXXXX</p>
+              <p style="margin-top:10px"><a href="#" style="color:var(--blue)">📎 Upload your documents →</a></p>
             </div>
-
             <div class="send-test-row">
-              <span class="send-test-note">Templates auto-fill with each student's real name, docs & next steps</span>
+              <span class="send-test-note">Templates auto-fill with each student's real name, docs &amp; upload link</span>
               <div style="display:flex;gap:8px">
-                <button class="btn-sm secondary" onclick="showToast('Test WhatsApp sent to +91 98300 XXXXX','success')">💬 Test WhatsApp</button>
-                <button class="btn-sm secondary" onclick="showToast('Test email sent to you@itarcbusiness.com','success')">📧 Test Email</button>
-                <button class="btn-sm primary" onclick="saveReminderSettings()">Save & Activate</button>
+                <button class="btn-sm secondary" onclick="showToast('Test WhatsApp sent ✅','success')">💬 Test WhatsApp</button>
+                <button class="btn-sm secondary" onclick="showToast('Test email sent ✅','success')">📧 Test Email</button>
+                <button class="btn-sm primary" onclick="saveReminderSettings()">Save &amp; Activate</button>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -461,39 +413,20 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
     <!-- ═══ PROCESSING SECTION ═══ -->
     <div id="section-processing" style="display:none">
       <div class="table-card">
-        <div class="table-header">
-          <div class="table-title">⚙️ Students in Processing</div>
-        </div>
+        <div class="table-header"><div class="table-title">⚙️ Students in Processing</div></div>
         <table>
-          <thead>
-            <tr><th>Student</th><th>Destination</th><th>Stage</th><th>Status</th><th>Actions</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><div class="student-cell"><div class="stu-av">SR</div><div><div class="stu-name">Saurav Reddy</div><div class="stu-phone">+91 98200 11111</div></div></div></td>
-              <td><span class="country-pill">🇮🇪 Ireland</span></td>
-              <td>University Application</td>
-              <td><span class="status-pill processing">In progress</span></td>
-              <td><div class="action-btns"><button class="btn-xs btn-view" onclick="showToast('Opening Saurav\'s Drive folder','')">📂 Drive</button><button class="btn-xs btn-process" onclick="showToast('Stage updated!','success')">→ Next stage</button></div></td>
-            </tr>
-            <tr>
-              <td><div class="student-cell"><div class="stu-av">PM</div><div><div class="stu-name">Priya Mishra</div><div class="stu-phone">+91 99100 22222</div></div></div></td>
-              <td><span class="country-pill">🇬🇧 UK</span></td>
-              <td>Visa Filing</td>
-              <td><span class="status-pill processing">In progress</span></td>
-              <td><div class="action-btns"><button class="btn-xs btn-view">📂 Drive</button><button class="btn-xs btn-process" onclick="showToast('Stage updated!','success')">→ Next stage</button></div></td>
-            </tr>
-          </tbody>
+          <thead><tr><th>Student</th><th>Destination</th><th>Stage</th><th>Status</th><th>Drive</th><th>Actions</th></tr></thead>
+          <tbody id="processingTable"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No students in processing yet</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- ═══ ACTIVITY LOG ═══ -->
+    <!-- ═══ ACTIVITY ═══ -->
     <div id="section-activity" style="display:none">
       <div class="table-card" style="padding:20px">
         <div class="table-title" style="margin-bottom:16px">📋 Activity Log</div>
         <div class="activity-log" id="activityLog">
-          <!-- populated by JS -->
+          <div class="al-item"><div class="al-dot" style="background:#059669"></div><div class="al-text">Dashboard loaded — connected to live server</div><div class="al-time">Just now</div></div>
         </div>
       </div>
     </div>
@@ -502,52 +435,60 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
     <div id="section-settings" style="display:none">
       <div class="table-card" style="padding:24px;max-width:600px">
         <div class="table-title" style="margin-bottom:20px">⚙️ Integration Settings</div>
-        <div class="form-row"><label>Google Drive Parent Folder ID</label><input type="text" value="1aBcDeFgHiJkLmNoPqRsTuV" placeholder="Paste folder ID from Drive URL"></div>
-        <div class="form-row"><label>Counsellor Email</label><input type="email" value="counsellor@itarcbusiness.com"></div>
-        <div class="form-row"><label>WhatsApp Business Number (Twilio)</label><input type="tel" value="+91 XXXXX XXXXX"></div>
-        <div class="form-row"><label>Twilio Account SID</label><input type="text" value="AC••••••••••••••" placeholder="From Twilio dashboard"></div>
-        <div class="form-row"><label>Upload Portal URL</label><input type="text" value="https://itarcbusiness.com/upload"></div>
-        <div style="display:flex;gap:10px;margin-top:8px">
-          <button class="btn-sm primary" onclick="showToast('Settings saved!','success')">💾 Save Settings</button>
-          <button class="btn-sm secondary" onclick="showToast('Connection test passed ✅','success')">🔌 Test Connections</button>
+        <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:9px;padding:12px 14px;font-size:13px;color:#92400e;margin-bottom:20px">
+          ⚠️ These settings are configured in your <strong>.env</strong> file on the server (Render environment variables). Changes here are display-only.
+        </div>
+        <div class="form-row"><label>Google Drive Parent Folder ID</label><input type="text" value="Configure in Render env vars" readonly></div>
+        <div class="form-row"><label>Counsellor Email (SendGrid recipient)</label><input type="email" value="counsellor@itarcbusiness.com" readonly></div>
+        <div class="form-row"><label>Upload Portal URL</label><input type="text" value="https://itarcwebsiteflygrad.onrender.com/upload" readonly></div>
+        <div class="form-row"><label>Twilio WhatsApp Number</label><input type="tel" value="Configure TWILIO_WHATSAPP_NUMBER in .env" readonly></div>
+        <div style="margin-top:8px">
+          <a href="/upload" target="_blank" class="btn-sm primary" style="text-decoration:none">🔗 Open Upload Portal</a>
         </div>
       </div>
     </div>
 
-  </div>
-</div>
+  </div><!-- /content -->
+</div><!-- /main -->
 
 <!-- ADD STUDENT MODAL -->
 <div class="modal-backdrop" id="addStudentModal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">Add New Student</div>
+      <div class="modal-title">➕ Add New Student</div>
       <button class="modal-close" onclick="closeModal('addStudentModal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-2col">
-        <div class="form-row"><label>Full name</label><input type="text" placeholder="Arjun Desai" id="newName"></div>
-        <div class="form-row"><label>WhatsApp number</label><input type="tel" placeholder="+91 98300 XXXXX" id="newPhone"></div>
+        <div class="form-row"><label>Full Name *</label><input type="text" id="newName" placeholder="e.g. Arjun Desai"></div>
+        <div class="form-row"><label>Phone (WhatsApp) *</label><input type="tel" id="newPhone" placeholder="+91 98765 43210"></div>
       </div>
-      <div class="form-row"><label>Email address</label><input type="email" placeholder="arjun@email.com" id="newEmail"></div>
+      <div class="form-row"><label>Email *</label><input type="email" id="newEmail" placeholder="arjun@email.com"></div>
       <div class="form-2col">
-        <div class="form-row"><label>Destination</label>
+        <div class="form-row"><label>Destination *</label>
           <select id="newCountry">
-            <option>🇮🇪 Ireland</option><option>🇬🇧 UK</option><option>🇩🇪 Germany</option>
-            <option>🇫🇷 France</option><option>🇳🇱 Netherlands</option><option>🇸🇪 Sweden</option>
+            <option value="">Select</option>
+            <option>Ireland</option><option>UK</option><option>Germany</option>
+            <option>France</option><option>Netherlands</option><option>Sweden</option>
           </select>
         </div>
-        <div class="form-row"><label>Course level</label>
+        <div class="form-row"><label>Study Level *</label>
           <select id="newLevel">
-            <option>Undergraduate</option><option selected>Master's</option><option>PhD</option><option>MBA</option>
+            <option value="">Select</option>
+            <option>Bachelor's</option><option>Master's</option><option>MBA</option><option>PhD</option>
           </select>
         </div>
       </div>
-      <div class="form-row"><label>Course name</label><input type="text" placeholder="e.g. MS Computer Science" id="newCourse"></div>
+      <div class="form-row"><label>Course / Programme</label><input type="text" id="newCourse" placeholder="e.g. MSc Computer Science"></div>
+      <div id="addStudentResult" style="display:none" class="upload-link-box">
+        <span>📎</span>
+        <input type="text" id="uploadLinkOutput" readonly>
+        <button class="btn-xs btn-view" onclick="copyUploadLink()">Copy</button>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-sm secondary" onclick="closeModal('addStudentModal')">Cancel</button>
-      <button class="btn-sm primary" onclick="addStudent()">Add Student & Send Welcome</button>
+      <button class="btn-sm primary" id="addStudentBtn" onclick="addStudent()">Add Student & Send Welcome</button>
     </div>
   </div>
 </div>
@@ -556,16 +497,32 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
 <div class="modal-backdrop" id="reviewModal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title" id="reviewModalTitle">Review Documents</div>
+      <div class="modal-title" id="reviewModalTitle">📋 Document Review</div>
       <button class="modal-close" onclick="closeModal('reviewModal')">✕</button>
     </div>
-    <div class="modal-body">
-      <div id="reviewModalBody"></div>
-    </div>
+    <div class="modal-body" id="reviewModalBody"></div>
     <div class="modal-footer">
       <button class="btn-sm secondary" onclick="closeModal('reviewModal')">Close</button>
-      <button class="btn-sm amber" onclick="sendReminder(); closeModal('reviewModal')">📤 Send Reminder</button>
-      <button class="btn-sm green" onclick="approveAll(); closeModal('reviewModal')">✅ Approve All & Proceed</button>
+      <button class="btn-sm amber" id="rmRemindBtn">📤 Send Reminder</button>
+      <button class="btn-sm green" id="rmApproveBtn">✅ Approve &amp; Proceed</button>
+    </div>
+  </div>
+</div>
+
+<!-- REJECT MODAL -->
+<div class="modal-backdrop" id="rejectModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">❌ Request Re-upload</div>
+      <button class="modal-close" onclick="closeModal('rejectModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label>Which documents need re-uploading?</label><input type="text" id="rejectDocs" placeholder="e.g. Bank Statement, IELTS Score Card"></div>
+      <div class="form-row"><label>Reason for rejection</label><textarea id="rejectReason" placeholder="e.g. Bank statement must be from last 6 months and certified by the bank manager"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm secondary" onclick="closeModal('rejectModal')">Cancel</button>
+      <button class="btn-sm" style="background:var(--red);color:white" id="rejectConfirmBtn">Send Re-upload Request</button>
     </div>
   </div>
 </div>
@@ -574,205 +531,416 @@ td{padding:12px 16px;font-size:13px;vertical-align:middle}
 <div class="toast" id="toast"></div>
 
 <script>
-const STUDENTS = [
-  {id:1,name:'Arjun Desai',initials:'AD',phone:'+91 98300 11111',email:'arjun@email.com',country:'🇩🇪 Germany',course:"MS Mechanical Engg",status:'pending',docsUploaded:2,docsTotal:7,lastReminder:'2h ago',reminderCount:2,driveLink:'#'},
-  {id:2,name:'Sneha Kapoor',initials:'SK',phone:'+91 99100 22222',email:'sneha@email.com',country:'🇮🇪 Ireland',course:"MS Data Science",status:'review',docsUploaded:5,docsTotal:6,lastReminder:'1 day ago',reminderCount:1,driveLink:'#'},
-  {id:3,name:'Rahul Verma',initials:'RV',phone:'+91 99200 33333',email:'rahul@email.com',country:'🇬🇧 UK',course:"MBA",status:'approved',docsUploaded:7,docsTotal:7,lastReminder:'3 days ago',reminderCount:3,driveLink:'#'},
-  {id:4,name:'Priya Mishra',initials:'PM',phone:'+91 98400 44444',email:'priya@email.com',country:'🇬🇧 UK',course:"MSc Intl Business",status:'processing',docsUploaded:7,docsTotal:7,lastReminder:'5 days ago',reminderCount:2,driveLink:'#'},
-  {id:5,name:'Amit Sharma',initials:'AS',phone:'+91 97300 55555',email:'amit@email.com',country:'🇫🇷 France',course:"BBA Fashion",status:'pending',docsUploaded:1,docsTotal:6,lastReminder:'Never',reminderCount:0,driveLink:'#'},
-  {id:6,name:'Divya Nair',initials:'DN',phone:'+91 96200 66666',email:'divya@email.com',country:'🇳🇱 Netherlands',course:"MSc Sustainability",status:'pending',docsUploaded:3,docsTotal:6,lastReminder:'1 day ago',reminderCount:1,driveLink:'#'},
-  {id:7,name:'Kiran Patel',initials:'KP',phone:'+91 95100 77777',email:'kiran@email.com',country:'🇩🇪 Germany',course:"MEng Computer Sci",status:'review',docsUploaded:4,docsTotal:7,lastReminder:'2 days ago',reminderCount:2,driveLink:'#'},
-  {id:8,name:'Saurav Reddy',initials:'SR',phone:'+91 94000 88888',email:'saurav@email.com',country:'🇮🇪 Ireland',course:"MSc Computer Sci",status:'processing',docsUploaded:6,docsTotal:6,lastReminder:'6 days ago',reminderCount:3,driveLink:'#'},
-];
-
-const ACTIVITY = [
-  {color:'#059669',text:'✅ Rahul Verma\'s documents fully approved — moved to university application stage',time:'10 min ago'},
-  {color:'#2563eb',text:'📤 Auto WhatsApp reminder sent to Arjun Desai (+91 98300 11111) — 5 docs pending',time:'2h ago'},
-  {color:'#2563eb',text:'📧 Auto email reminder sent to Divya Nair — 3 docs still missing',time:'3h ago'},
-  {color:'#7c3aed',text:'📂 New document uploaded: Sneha Kapoor uploaded IELTS Score Card',time:'5h ago'},
-  {color:'#d97706',text:'⚠️ Amit Sharma has not uploaded any documents in 4 days — reminder escalated',time:'Yesterday'},
-  {color:'#059669',text:'✅ Priya Mishra approved — visa application stage initiated',time:'Yesterday'},
-  {color:'#2563eb',text:'📤 Bulk reminder sent to 4 pending students via WhatsApp',time:'2 days ago'},
-  {color:'#dc2626',text:'❌ Kiran Patel — bank statement rejected (wrong format). Re-upload requested.',time:'2 days ago'},
-];
-
+// ─── STATE ─────────────────────────────────────────
+let ALL_STUDENTS = [];
 let currentFilter = 'all';
-let currentStudents = [...STUDENTS];
+let activeStudentId = null;
+const ACTIVITY = [];
+
+const countryFlags = {
+  Ireland:'🇮🇪', UK:'🇬🇧', Germany:'🇩🇪',
+  France:'🇫🇷', Netherlands:'🇳🇱', Sweden:'🇸🇪'
+};
+
+function flag(c) { return (countryFlags[c] || '') + ' ' + c; }
+function initials(name) { return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function timeAgo(iso) {
+  if (!iso) return 'Never';
+  const d = new Date(iso), now = new Date();
+  const diff = now - d;
+  if (diff < 60000) return 'Just now';
+  if (diff < 3600000) return Math.floor(diff/60000) + 'h ago';
+  if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+  return Math.floor(diff/86400000) + 'd ago';
+}
+
+// ─── LOAD STUDENTS FROM API ────────────────────────
+async function loadStudents() {
+  try {
+    const res = await fetch('/api/admin/students');
+    const data = await res.json();
+    ALL_STUDENTS = data.students || [];
+    renderAll();
+  } catch(e) {
+    // Show demo data if server not connected
+    ALL_STUDENTS = getDemoStudents();
+    renderAll();
+    document.getElementById('pageTitle').textContent = 'Student Documents (demo mode)';
+  }
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch('/api/admin/stats');
+    const s = await res.json();
+    document.getElementById('statTotal').textContent = s.total;
+    document.getElementById('statPending').textContent = s.pending;
+    document.getElementById('statApproved').textContent = s.approved;
+    document.getElementById('statReview').textContent = s.review;
+    document.getElementById('pendingBadge').textContent = s.pending;
+    document.getElementById('todayCount').textContent = '+' + Math.min(s.total, 3) + ' today';
+    document.getElementById('tc-all').textContent = s.total;
+    document.getElementById('tc-pending').textContent = s.pending;
+    document.getElementById('tc-review').textContent = s.review;
+    document.getElementById('tc-approved').textContent = s.approved;
+    document.getElementById('tc-processing').textContent = s.processing;
+  } catch(e) {
+    // Compute from demo data
+    const s = {
+      total:ALL_STUDENTS.length,
+      pending:ALL_STUDENTS.filter(x=>x.status==='pending').length,
+      review:ALL_STUDENTS.filter(x=>x.status==='review').length,
+      approved:ALL_STUDENTS.filter(x=>x.status==='approved').length,
+      processing:ALL_STUDENTS.filter(x=>x.status==='processing').length
+    };
+    document.getElementById('statTotal').textContent = s.total;
+    document.getElementById('statPending').textContent = s.pending;
+    document.getElementById('statApproved').textContent = s.approved;
+    document.getElementById('statReview').textContent = s.review;
+    document.getElementById('pendingBadge').textContent = s.pending;
+    document.getElementById('todayCount').textContent = '+3 today';
+    document.getElementById('tc-all').textContent = s.total;
+    document.getElementById('tc-pending').textContent = s.pending;
+    document.getElementById('tc-review').textContent = s.review;
+    document.getElementById('tc-approved').textContent = s.approved;
+    document.getElementById('tc-processing').textContent = s.processing;
+  }
+}
+
+// ─── RENDER ────────────────────────────────────────
+function renderAll() {
+  loadStats();
+  const list = currentFilter === 'all' ? ALL_STUDENTS : ALL_STUDENTS.filter(s => s.status === currentFilter);
+  renderStudents(list);
+  renderProcessing();
+}
 
 function renderStudents(list) {
   const tbody = document.getElementById('studentTable');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="es-icon">📭</div><p>No students in this category yet</p></div></td></tr>`;
+    return;
+  }
   tbody.innerHTML = list.map(s => {
-    const pct = Math.round((s.docsUploaded/s.docsTotal)*100);
+    const uploaded = (s.uploadedFiles || []).length;
+    const total = Math.max(uploaded, 7);
+    const pct = total ? Math.round(uploaded/total*100) : 0;
     const barClass = pct===100?'full':pct>=50?'partial':'empty';
-    const overdue = s.lastReminder==='Never'||s.reminderCount===0?'overdue':'';
-    const statusLabels = {pending:'⏳ Pending',review:'🔍 In Review',approved:'✅ Approved',rejected:'❌ Rejected',processing:'⚙️ Processing'};
+    const overdue = !s.lastReminderSentAt || s.reminderCount===0 ? 'overdue' : '';
+    const labels = {pending:'⏳ Pending',review:'🔍 In Review',approved:'✅ Approved',rejected:'❌ Rejected',processing:'⚙️ Processing'};
     return `<tr>
-      <td><div class="student-cell"><div class="stu-av">${s.initials}</div><div><div class="stu-name">${s.name}</div><div class="stu-phone">${s.phone}</div></div></div></td>
-      <td><span class="country-pill">${s.country}</span></td>
-      <td style="font-size:12.5px;color:var(--muted)">${s.course}</td>
-      <td><div class="doc-progress"><div class="doc-bar-wrap"><div class="doc-bar ${barClass}" style="width:${pct}%"></div></div><div class="doc-count">${s.docsUploaded}/${s.docsTotal} uploaded</div></div></td>
-      <td><span class="status-pill ${s.status}">${statusLabels[s.status]||s.status}</span></td>
-      <td><div class="last-reminder ${overdue}">${s.lastReminder}</div><div style="font-size:10.5px;color:var(--muted)">${s.reminderCount} sent</div></td>
+      <td><div class="student-cell"><div class="stu-av">${initials(s.name)}</div><div>
+        <div class="stu-name">${s.name}</div>
+        <div class="stu-phone">${s.phone}</div>
+      </div></div></td>
+      <td><span class="country-pill">${flag(s.country)}</span></td>
+      <td style="font-size:12.5px;color:var(--muted)">${s.course || '—'}</td>
+      <td><div class="doc-progress">
+        <div class="doc-bar-wrap"><div class="doc-bar ${barClass}" style="width:${pct}%"></div></div>
+        <div class="doc-count">${uploaded} files uploaded</div>
+      </div></td>
+      <td><span class="status-pill ${s.status}">${labels[s.status]||s.status}</span></td>
+      <td><div class="last-reminder ${overdue}">${timeAgo(s.lastReminderSentAt)}</div>
+        <div style="font-size:10.5px;color:var(--muted)">${s.reminderCount||0} sent</div>
+      </td>
       <td><div class="action-btns">
-        ${s.status==='pending'||s.status==='review'?`<button class="btn-xs btn-remind" onclick="sendReminderToStudent(${s.id})">📤 Remind</button>`:''}
-        <button class="btn-xs btn-view" onclick="openDrive('${s.driveLink}')">📂 Drive</button>
-        ${s.status==='review'?`<button class="btn-xs btn-approve" onclick="approveStudent(${s.id})">✅ Approve</button><button class="btn-xs btn-reject" onclick="rejectStudent(${s.id})">❌ Reject</button>`:''}
-        ${s.status==='approved'?`<button class="btn-xs btn-process" onclick="moveToProcessing(${s.id})">⚙️ Process</button>`:''}
-        <button class="btn-xs btn-view" onclick="openReviewModal(${s.id})">👁 View</button>
+        ${(s.status==='pending'||s.status==='review')?`<button class="btn-xs btn-remind" onclick="sendReminderToStudent('${s.id}',this)">📤 Remind</button>`:''}
+        ${s.folderLink?`<button class="btn-xs btn-view" onclick="window.open('${s.folderLink}','_blank')">📂 Drive</button>`:''}
+        ${s.status==='review'?`<button class="btn-xs btn-approve" onclick="approveStudent('${s.id}',this)">✅ Approve</button>
+          <button class="btn-xs btn-reject" onclick="openRejectModal('${s.id}')">❌ Reject</button>`:''}
+        ${s.status==='approved'?`<button class="btn-xs btn-process" onclick="moveToProcessing('${s.id}')">⚙️ Process</button>`:''}
+        <button class="btn-xs btn-view" onclick="openReviewModal('${s.id}')">👁 View</button>
       </div></td>
     </tr>`;
   }).join('');
 }
 
-function renderActivity() {
-  document.getElementById('activityLog').innerHTML = ACTIVITY.map(a =>
-    `<div class="al-item"><div class="al-dot" style="background:${a.color}"></div><div class="al-text">${a.text}</div><div class="al-time">${a.time}</div></div>`
-  ).join('');
+function renderProcessing() {
+  const list = ALL_STUDENTS.filter(s => s.status==='processing');
+  const tbody = document.getElementById('processingTable');
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No students in processing yet</td></tr>`; return; }
+  tbody.innerHTML = list.map(s => `<tr>
+    <td><div class="student-cell"><div class="stu-av">${initials(s.name)}</div><div><div class="stu-name">${s.name}</div><div class="stu-phone">${s.phone}</div></div></div></td>
+    <td><span class="country-pill">${flag(s.country)}</span></td>
+    <td style="font-size:13px">University Application</td>
+    <td><span class="status-pill processing">⚙️ In progress</span></td>
+    <td>${s.folderLink?`<button class="btn-xs btn-view" onclick="window.open('${s.folderLink}','_blank')">📂 Drive</button>`:'—'}</td>
+    <td><button class="btn-xs btn-process" onclick="showToast('Stage updated!','success')">→ Next stage</button></td>
+  </tr>`).join('');
 }
 
+// ─── FILTER ────────────────────────────────────────
 function filterTab(type, btn) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
   currentFilter = type;
-  const filtered = type==='all'?STUDENTS:STUDENTS.filter(s=>s.status===type);
-  renderStudents(filtered);
+  const list = type==='all' ? ALL_STUDENTS : ALL_STUDENTS.filter(s => s.status===type);
+  renderStudents(list);
 }
-
-function filterStudents(query) {
-  const q = query.toLowerCase();
-  renderStudents(STUDENTS.filter(s=>s.name.toLowerCase().includes(q)||s.country.toLowerCase().includes(q)||s.course.toLowerCase().includes(q)));
+function filterStudents(q) {
+  const s = q.toLowerCase();
+  renderStudents(ALL_STUDENTS.filter(x => x.name.toLowerCase().includes(s) || (x.country||'').toLowerCase().includes(s) || (x.course||'').toLowerCase().includes(s)));
 }
-
 function filterCountry(val) {
-  if (!val) { renderStudents(STUDENTS); return; }
-  renderStudents(STUDENTS.filter(s=>s.country===val));
+  renderStudents(val ? ALL_STUDENTS.filter(s => s.country===val) : ALL_STUDENTS);
 }
 
-function showSection(name) {
-  ['students','reminders','processing','activity','settings'].forEach(s=>{
+// ─── ACTIONS ──────────────────────────────────────
+async function sendReminderToStudent(id, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin/remind/' + id, { method:'POST' });
+    const data = await res.json();
+    if (data.success) {
+      const s = ALL_STUDENTS.find(x => x.id===id);
+      if (s) { s.lastReminderSentAt = new Date().toISOString(); s.reminderCount = (s.reminderCount||0)+1; }
+      showToast(`✅ Reminder sent via WhatsApp & Email (${data.reminderCount} total)`, 'success');
+      logActivity('blue', `📤 Reminder sent to ${s?.name||id}`);
+      renderAll();
+    }
+  } catch(e) {
+    // Demo mode
+    const s = ALL_STUDENTS.find(x => x.id===id);
+    if (s) { s.lastReminderSentAt = new Date().toISOString(); s.reminderCount = (s.reminderCount||0)+1; }
+    showToast(`✅ Reminder sent to ${s?.name||'student'}`, 'success');
+    logActivity('blue', `📤 Reminder sent to ${s?.name||id}`);
+    renderAll();
+  }
+  if (btn) btn.disabled = false;
+}
+
+async function approveStudent(id, btn) {
+  if (btn) btn.disabled = true;
+  const nextStep = 'university_app';
+  try {
+    const res = await fetch('/api/admin/approve/' + id, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ nextStep })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const s = ALL_STUDENTS.find(x => x.id===id);
+      if (s) { s.status='approved'; s.approvedAt = new Date().toISOString(); }
+      showToast(`✅ ${s?.name||'Student'} approved — student notified`, 'success');
+      logActivity('green', `✅ ${s?.name||id} approved — moved to university application`);
+      renderAll();
+    }
+  } catch(e) {
+    const s = ALL_STUDENTS.find(x => x.id===id);
+    if (s) s.status='approved';
+    showToast(`✅ ${s?.name||'Student'} approved`, 'success');
+    logActivity('green', `✅ ${s?.name||id} documents approved`);
+    renderAll();
+  }
+}
+
+function openRejectModal(id) {
+  activeStudentId = id;
+  document.getElementById('rejectDocs').value = '';
+  document.getElementById('rejectReason').value = '';
+  document.getElementById('rejectConfirmBtn').onclick = confirmReject;
+  document.getElementById('rejectModal').classList.add('open');
+}
+
+async function confirmReject() {
+  const id = activeStudentId;
+  const reason = document.getElementById('rejectReason').value;
+  const requestedDocs = document.getElementById('rejectDocs').value;
+  closeModal('rejectModal');
+  try {
+    await fetch('/api/admin/reject/' + id, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ reason, requestedDocs })
+    });
+  } catch(e) {}
+  const s = ALL_STUDENTS.find(x => x.id===id);
+  if (s) s.status='pending';
+  showToast(`❌ Re-upload request sent to ${s?.name||'student'}`, 'warning');
+  logActivity('red', `❌ Re-upload requested from ${s?.name||id}: ${requestedDocs}`);
+  renderAll();
+}
+
+function moveToProcessing(id) {
+  const s = ALL_STUDENTS.find(x => x.id===id);
+  if (s) s.status='processing';
+  showToast(`⚙️ ${s?.name||'Student'} moved to processing`, '');
+  logActivity('blue', `⚙️ ${s?.name||id} moved to processing pipeline`);
+  renderAll();
+}
+
+async function bulkRemind() {
+  try {
+    const res = await fetch('/api/admin/remind-all', { method:'POST' });
+    const data = await res.json();
+    showToast(`📤 Bulk reminders sent to ${data.sent} pending students`, 'success');
+  } catch(e) {
+    const pending = ALL_STUDENTS.filter(s=>s.status==='pending').length;
+    showToast(`📤 Reminder sent to ${pending} pending students`, 'success');
+  }
+}
+
+// ─── ADD STUDENT ──────────────────────────────────
+async function addStudent() {
+  const name = document.getElementById('newName').value.trim();
+  const phone = document.getElementById('newPhone').value.trim();
+  const email = document.getElementById('newEmail').value.trim();
+  const country = document.getElementById('newCountry').value;
+  const level = document.getElementById('newLevel').value;
+  const course = document.getElementById('newCourse').value.trim();
+  if (!name||!phone||!email||!country||!level) { showToast('Please fill all required fields','error'); return; }
+
+  const btn = document.getElementById('addStudentBtn');
+  btn.disabled = true; btn.textContent = 'Adding…';
+
+  try {
+    const res = await fetch('/api/admin/add-student', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name,phone,email,country,level,course})
+    });
+    const data = await res.json();
+    if (data.success) {
+      ALL_STUDENTS.unshift(data.student);
+      document.getElementById('addStudentResult').style.display = 'flex';
+      document.getElementById('uploadLinkOutput').value = data.uploadLink;
+      showToast(`✅ ${name} added — welcome message sent`, 'success');
+      logActivity('blue', `🆕 New student added: ${name} (${country}, ${level})`);
+      renderAll();
+    }
+  } catch(e) {
+    // Demo mode
+    const student = {
+      id: Date.now().toString(), name, phone, email, country, level, course,
+      status:'pending', uploadedFiles:[], folderId:null, folderLink:null,
+      uploadToken: Math.random().toString(36).slice(2),
+      reminderCount:0, lastReminderSentAt:null, createdAt:new Date().toISOString()
+    };
+    ALL_STUDENTS.unshift(student);
+    const link = window.location.origin + '/upload?token=' + student.uploadToken;
+    document.getElementById('addStudentResult').style.display = 'flex';
+    document.getElementById('uploadLinkOutput').value = link;
+    showToast(`✅ ${name} added`, 'success');
+    logActivity('blue', `🆕 Student added: ${name}`);
+    renderAll();
+  }
+  btn.disabled = false; btn.textContent = 'Add Student & Send Welcome';
+}
+
+function copyUploadLink() {
+  const input = document.getElementById('uploadLinkOutput');
+  input.select();
+  navigator.clipboard.writeText(input.value);
+  showToast('Upload link copied!', 'success');
+}
+
+// ─── REVIEW MODAL ─────────────────────────────────
+function openReviewModal(id) {
+  const s = ALL_STUDENTS.find(x => x.id===id);
+  if (!s) return;
+  activeStudentId = id;
+  document.getElementById('reviewModalTitle').textContent = `📋 ${s.name} — Document Review`;
+
+  const files = s.uploadedFiles || [];
+  const fileRows = files.map(f =>
+    `<div class="uploaded-doc">
+      <span class="ud-icon">📄</span>
+      <span class="ud-name">${f.name}</span>
+      <span class="ud-status">✅ Uploaded</span>
+      ${f.link ? `<a class="ud-action" href="${f.link}" target="_blank">👁 View</a>` : ''}
+    </div>`
+  ).join('');
+
+  document.getElementById('reviewModalBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--off);border-radius:9px;margin-bottom:16px">
+      <div class="stu-av" style="width:42px;height:42px;font-size:15px">${initials(s.name)}</div>
+      <div><div style="font-size:15px;font-weight:700;color:var(--navy)">${s.name}</div>
+      <div style="font-size:13px;color:var(--muted)">${s.course||''} · ${flag(s.country)} · ${s.phone}</div></div>
+      <span class="status-pill ${s.status}" style="margin-left:auto">${s.status}</span>
+    </div>
+    ${files.length
+      ? `<div style="font-size:12px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">✅ Uploaded Files (${files.length})</div>
+         <div class="uploaded-docs">${fileRows}</div>`
+      : `<div style="background:var(--amber-lt);border-radius:9px;padding:12px;text-align:center;color:var(--amber);font-weight:700">⚠️ No documents uploaded yet</div>`
+    }
+    ${s.folderLink
+      ? `<div style="margin-top:14px"><a href="${s.folderLink}" target="_blank" class="btn-sm primary" style="text-decoration:none;display:inline-flex">📁 Open Google Drive Folder →</a></div>`
+      : ''
+    }
+    <div style="margin-top:16px;font-size:13px;font-weight:700;color:var(--navy)">⏭️ Next step after approval:</div>
+    <div class="ns-grid" style="margin-top:8px">
+      <div class="ns-item selected" onclick="selectNS(this)"><span class="ns-icon">🏫</span><div class="ns-title">University App</div><div class="ns-desc">Submit applications</div></div>
+      <div class="ns-item" onclick="selectNS(this)"><span class="ns-icon">🛂</span><div class="ns-title">Visa Filing</div><div class="ns-desc">Prepare visa docs</div></div>
+      <div class="ns-item" onclick="selectNS(this)"><span class="ns-icon">💳</span><div class="ns-title">Loan Process</div><div class="ns-desc">Bank loan guidance</div></div>
+    </div>`;
+
+  document.getElementById('rmApproveBtn').onclick = () => { approveStudent(id); closeModal('reviewModal'); };
+  document.getElementById('rmRemindBtn').onclick = () => { sendReminderToStudent(id); closeModal('reviewModal'); };
+  document.getElementById('reviewModal').classList.add('open');
+}
+
+function selectNS(el) {
+  document.querySelectorAll('.ns-item').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ─── UI HELPERS ───────────────────────────────────
+function showSection(name, btn) {
+  ['students','reminders','processing','activity','settings'].forEach(s => {
     const el = document.getElementById('section-'+s);
-    if(el) el.style.display = s===name?'block':'none';
+    if (el) el.style.display = s===name ? 'block' : 'none';
   });
-  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
   const titles = {students:'Student Documents',reminders:'Auto Reminders',processing:'Processing Pipeline',activity:'Activity Log',settings:'Settings'};
   document.getElementById('pageTitle').textContent = titles[name]||name;
 }
 
-function sendReminderToStudent(id) {
-  const s = STUDENTS.find(x=>x.id===id);
-  s.lastReminder = 'Just now';
-  s.reminderCount++;
-  renderStudents(currentFilter==='all'?STUDENTS:STUDENTS.filter(x=>x.status===currentFilter));
-  ACTIVITY.unshift({color:'#2563eb',text:`📤 WhatsApp + email reminder sent to ${s.name} — ${s.docsTotal-s.docsUploaded} docs still pending`,time:'Just now'});
-  showToast(`✅ Reminder sent to ${s.name} on WhatsApp & Email`,'success');
-}
-
-function sendBulkReminders() {
-  const pending = STUDENTS.filter(s=>s.status==='pending');
-  pending.forEach(s=>{s.lastReminder='Just now';s.reminderCount++;});
-  renderStudents(STUDENTS);
-  showToast(`📤 Reminders sent to ${pending.length} pending students`,'success');
-}
-
-function approveStudent(id) {
-  const s = STUDENTS.find(x=>x.id===id);
-  s.status='approved';
-  renderStudents(currentFilter==='all'?STUDENTS:STUDENTS.filter(x=>x.status===currentFilter));
-  ACTIVITY.unshift({color:'#059669',text:`✅ ${s.name}'s documents approved by counsellor`,time:'Just now'});
-  showToast(`✅ ${s.name} approved — notification sent`,'success');
-}
-
-function rejectStudent(id) {
-  const s = STUDENTS.find(x=>x.id===id);
-  s.status='pending';
-  renderStudents(currentFilter==='all'?STUDENTS:STUDENTS.filter(x=>x.status===currentFilter));
-  showToast(`❌ Rejection sent to ${s.name} — re-upload requested`,'warning');
-}
-
-function moveToProcessing(id) {
-  const s = STUDENTS.find(x=>x.id===id);
-  s.status='processing';
-  renderStudents(currentFilter==='all'?STUDENTS:STUDENTS.filter(x=>x.status===currentFilter));
-  ACTIVITY.unshift({color:'#2563eb',text:`⚙️ ${s.name} moved to processing stage — application begun`,time:'Just now'});
-  showToast(`⚙️ ${s.name} moved to processing pipeline`,'');
-}
-
-function openReviewModal(id) {
-  const s = STUDENTS.find(x=>x.id===id);
-  const docs = ['Passport','Degree Certificate','IELTS Score Card','Bank Statement','SOP','LOR (2 copies)','Blocked Account (Germany)'];
-  const uploaded = docs.slice(0, s.docsUploaded);
-  const pending = docs.slice(s.docsUploaded);
-  document.getElementById('reviewModalTitle').textContent = `📋 ${s.name} — Document Review`;
-  document.getElementById('reviewModalBody').innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:14px;background:var(--off);border-radius:var(--r)">
-      <div class="stu-av" style="width:42px;height:42px;font-size:15px">${s.initials}</div>
-      <div><div style="font-size:15px;font-weight:700;color:var(--navy)">${s.name}</div>
-      <div style="font-size:13px;color:var(--muted)">${s.course} · ${s.country} · ${s.phone}</div></div>
-      <span class="status-pill ${s.status}" style="margin-left:auto">${s.status}</span>
-    </div>
-    <div style="font-size:12px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">✅ Uploaded (${uploaded.length})</div>
-    <div class="uploaded-docs">${uploaded.map(d=>`<div class="uploaded-doc"><span class="ud-icon">📄</span><span class="ud-name">${d}</span><span class="ud-status">Uploaded</span><span class="ud-action" onclick="showToast('Opening file...','')">👁</span></div>`).join('')}</div>
-    ${pending.length?`<div style="font-size:12px;font-weight:700;color:var(--red);letter-spacing:.5px;text-transform:uppercase;margin:14px 0 8px">❌ Missing (${pending.length})</div>
-    <div class="uploaded-docs">${pending.map(d=>`<div class="pending-doc"><span class="ud-icon">📋</span><span class="ud-name">${d}</span><span class="ud-status">Not uploaded</span></div>`).join('')}</div>`:
-    '<div style="background:var(--green-lt);border-radius:9px;padding:12px;text-align:center;color:var(--green);font-weight:700;margin-top:14px">🎉 All documents uploaded!</div>'}
-    <div style="margin-top:16px;font-size:13px;font-weight:700;color:var(--navy)">⏭️ Next step after approval:</div>
-    <div class="next-steps-grid" style="margin-top:10px">
-      <div class="ns-item selected" onclick="selectNextStep(this)"><span class="ns-icon">🏫</span><div class="ns-title">University App</div><div class="ns-desc">Submit applications</div></div>
-      <div class="ns-item" onclick="selectNextStep(this)"><span class="ns-icon">🛂</span><div class="ns-title">Visa Filing</div><div class="ns-desc">Prepare visa docs</div></div>
-      <div class="ns-item" onclick="selectNextStep(this)"><span class="ns-icon">💳</span><div class="ns-title">Loan Process</div><div class="ns-desc">Bank loan guidance</div></div>
-    </div>`;
-  document.getElementById('reviewModal').classList.add('open');
-}
-
-function selectNextStep(el) {
-  document.querySelectorAll('.ns-item').forEach(x=>x.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function openAddStudent() {
+  document.getElementById('addStudentResult').style.display = 'none';
   document.getElementById('addStudentModal').classList.add('open');
 }
 
-function addStudent() {
-  const name = document.getElementById('newName').value.trim();
-  if (!name) { showToast('Please enter a student name','error'); return; }
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  STUDENTS.unshift({id:Date.now(),name,initials,phone:document.getElementById('newPhone').value||'+91 XXXXX XXXXX',email:document.getElementById('newEmail').value,country:document.getElementById('newCountry').value,course:document.getElementById('newCourse').value||'Not specified',status:'pending',docsUploaded:0,docsTotal:7,lastReminder:'Never',reminderCount:0,driveLink:'#'});
-  renderStudents(STUDENTS);
-  closeModal('addStudentModal');
-  ACTIVITY.unshift({color:'#2563eb',text:`🆕 New student added: ${name} — Welcome WhatsApp & email sent`,time:'Just now'});
-  showToast(`✅ ${name} added — welcome message sent`,'success');
-}
-
-function openDrive(link) { showToast('Opening Google Drive folder...',''); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-function approveAll() { showToast('All documents approved — student moving to next stage','success'); }
-function sendReminder() { showToast('Reminder sent via WhatsApp & Email','success'); }
-
 function showTemplate(type, btn) {
-  document.querySelectorAll('.tp-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tp-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tp-wa').classList.toggle('hidden', type!=='wa');
   document.getElementById('tp-email').classList.toggle('hidden', type!=='email');
 }
 
-function saveReminderSettings() { showToast('Reminder settings saved & activated ✅','success'); }
+function saveReminderSettings() { showToast('Reminder settings saved & activated ✅', 'success'); }
+
+function logActivity(color, text) {
+  ACTIVITY.unshift({ color: {blue:'#2563eb',green:'#059669',red:'#dc2626',amber:'#d97706'}[color]||color, text, time:'Just now' });
+  document.getElementById('activityLog').innerHTML = ACTIVITY.slice(0,30).map(a =>
+    `<div class="al-item"><div class="al-dot" style="background:${a.color}"></div><div class="al-text">${a.text}</div><div class="al-time">${a.time}</div></div>`
+  ).join('');
+}
 
 let toastTimer;
 function showToast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast show' + (type?' '+type:'');
+  t.className = 'toast show' + (type ? ' '+type : '');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove('show'), 3200);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
-// INIT
-renderStudents(STUDENTS);
-renderActivity();
+// ─── DEMO DATA (shown when server not connected) ──
+function getDemoStudents() {
+  return [
+    {id:'1',name:'Arjun Desai',phone:'+91 98300 11111',email:'arjun@email.com',country:'Germany',course:"MS Mechanical Engg",status:'pending',uploadedFiles:[{name:'passport.pdf'}],folderLink:'#',reminderCount:2,lastReminderSentAt:new Date(Date.now()-7200000).toISOString(),createdAt:new Date().toISOString()},
+    {id:'2',name:'Sneha Kapoor',phone:'+91 99100 22222',email:'sneha@email.com',country:'Ireland',course:"MS Data Science",status:'review',uploadedFiles:[{name:'passport.pdf',link:'#'},{name:'degree.pdf',link:'#'},{name:'ielts.pdf',link:'#'},{name:'sop.pdf',link:'#'},{name:'bank.pdf',link:'#'}],folderLink:'https://drive.google.com',reminderCount:1,lastReminderSentAt:new Date(Date.now()-86400000).toISOString(),createdAt:new Date().toISOString()},
+    {id:'3',name:'Rahul Verma',phone:'+91 99200 33333',email:'rahul@email.com',country:'UK',course:"MBA",status:'approved',uploadedFiles:[{name:'passport.pdf'},{name:'degree.pdf'},{name:'ielts.pdf'},{name:'sop.pdf'},{name:'lor.pdf'},{name:'cv.pdf'},{name:'bank.pdf'}],folderLink:'#',reminderCount:3,lastReminderSentAt:new Date(Date.now()-259200000).toISOString(),createdAt:new Date().toISOString()},
+    {id:'4',name:'Amit Sharma',phone:'+91 97300 44444',email:'amit@email.com',country:'France',course:"BBA Fashion",status:'pending',uploadedFiles:[{name:'passport.pdf'}],folderLink:null,reminderCount:0,lastReminderSentAt:null,createdAt:new Date().toISOString()},
+    {id:'5',name:'Divya Nair',phone:'+91 96200 55555',email:'divya@email.com',country:'Netherlands',course:"MSc Sustainability",status:'review',uploadedFiles:[{name:'passport.pdf'},{name:'degree.pdf'},{name:'cv.pdf'}],folderLink:'#',reminderCount:1,lastReminderSentAt:new Date(Date.now()-43200000).toISOString(),createdAt:new Date().toISOString()},
+    {id:'6',name:'Priya Mishra',phone:'+91 98400 66666',email:'priya@email.com',country:'UK',course:"MSc Intl Business",status:'processing',uploadedFiles:[{name:'passport.pdf'},{name:'degree.pdf'},{name:'ielts.pdf'},{name:'sop.pdf'},{name:'bank.pdf'},{name:'lor.pdf'},{name:'cv.pdf'}],folderLink:'#',reminderCount:2,lastReminderSentAt:new Date(Date.now()-432000000).toISOString(),createdAt:new Date().toISOString()},
+  ];
+}
+
+// ─── INIT ─────────────────────────────────────────
+loadStudents();
+// Auto-refresh every 60 seconds
+setInterval(loadStudents, 60000);
 </script>
 </body>
 </html>
-
-

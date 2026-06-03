@@ -1,240 +1,439 @@
-/**
- * ITARC Business — Secure Production Server
- * ─────────────────────────────────────────
- * Serves static files + proxies AI agent to Anthropic
- * API key stays on server — NEVER sent to browser
- *
- * Set ONE of these env variables on Render:
- *   ANTHROPIC_API_KEY   ← standard name
- *   ITARC_API_KEY       ← also accepted
- */
+// ════════════════════════════════════════════════
+// ITARC SERVER — server.js
+// Node.js / Express backend
+// Deploy on Render.com (free tier)
+// ════════════════════════════════════════════════
 
-const express = require('express');
-const path    = require('path');
-const https   = require('https');
+require('dotenv').config();
+const express  = require('express');
+const multer   = require('multer');
+const cors     = require('cors');
+const path     = require('path');
+const { google } = require('googleapis');
+const stream   = require('stream');
+const sgMail   = require('@sendgrid/mail');
+const crypto   = require('crypto');
 
-const app  = express();
-const PORT = process.env.PORT || 3000;
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public')); // serves your website files
 
-// Accept either env variable name
-const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.ITARC_API_KEY || '';
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// ── Middleware ──────────────────────────────────────────────────────────────
-app.use(express.json({ limit: '8kb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+// ────────────────────────────────────────────────
+// IN-MEMORY STORE (replace with MongoDB / Postgres)
+// ────────────────────────────────────────────────
+// In production, swap every `STUDENTS` read/write
+// with real DB queries.  The shape is the same.
 
-// ── AI Agent System Prompt ──────────────────────────────────────────────────
-const SYSTEM_PROMPT =
-  "You are ITARC's friendly AI study abroad advisor for Indian students. " +
-  "ITARC Business is a Mumbai-based consultancy helping students study in " +
-  "Ireland, UK, Germany, Canada, Australia, USA & more. " +
-  "Key facts: " +
-  "Germany: tuition-free public universities (€0-350/semester), APS certificate required for Indians, " +
-  "block account €11,208/yr, 18-month job seeker visa after graduation, EU Blue Card PR in 21-33 months. " +
-  "Ireland: €10,000-25,000/yr, 2-year post-study visa, English medium, UCD QS#171, Trinity QS#81. " +
-  "UK: 1-year Masters, Graduate Route 2-year visa, IELTS 6.0-7.0, Russell Group unis. " +
-  "Canada: 3-year PGWP, Express Entry PR 2-3 years, SDS visa 20 days, IELTS 6.0+. " +
-  "Australia: Group of Eight unis, 2-4 year post-study visa, healthcare & nursing PR priority. " +
-  "USA: STEM OPT 3 years, GRE required for top unis, highest salary potential. " +
-  "ITARC: free counselling, 97% visa success, 600+ students placed, +91 84549 92179, info@itarcbusiness.com. " +
-  "Be helpful, concise (2-3 paragraphs max), warm and professional. " +
-  "Always end with a call to action to book a free counselling session. Use emojis naturally.";
+const STUDENTS = []; // { id, name, phone, email, country, level, course,
+                     //   counsellor, intake, status, docs, folderId,
+                     //   folderLink, uploadToken, reminderCount,
+                     //   lastReminderSentAt, createdAt }
 
-// ── Smart FAQ Fallback (works even if no API key set) ───────────────────────
-const FAQ = {
-  germany:
-    "🇩🇪 Germany is the best value for Indian students! Public universities charge only €150–350/semester — nearly free tuition. " +
-    "You need an APS certificate (ITARC guides you), a blocked account of €11,208, and IELTS 6.5+. " +
-    "After graduation you get an 18-month job seeker visa. TU Munich, RWTH Aachen and Heidelberg are top picks.\n\n" +
-    "📅 Book your free Germany counselling session with ITARC!",
+// ────────────────────────────────────────────────
+// GOOGLE DRIVE HELPERS
+// ────────────────────────────────────────────────
 
-  ireland:
-    "🇮🇪 Ireland is India's #1 European destination! English-medium education, Google/Meta/LinkedIn all have EU HQs in Dublin, " +
-    "and you get a 2-year post-study work permit after graduation. Tuition €10,000–25,000/yr, IELTS 6.0–6.5. " +
-    "UCD (QS #171) and Trinity College are the top choices for Indian students.\n\n" +
-    "📅 Book a free session — we'll build your personalised Ireland shortlist!",
-
-  canada:
-    "🇨🇦 Canada has the world's best PR pathway for students! Complete a 2-year degree → get a 3-year PGWP → " +
-    "1 year work experience → Express Entry PR. The SDS visa fast-tracks approval in ~20 days. " +
-    "University of Toronto, UBC, McGill and Waterloo are most popular with Indian students.\n\n" +
-    "📅 Book a free session to map your complete Canada PR pathway!",
-
-  uk:
-    "🇬🇧 UK degrees are globally respected and most Masters are just 1 year — saving you a full year of costs. " +
-    "After graduating you get the Graduate Route visa: 2 years open work rights (3 for PhD). " +
-    "Oxford, Cambridge, UCL and Manchester are top choices. IELTS 6.0–7.0 required.\n\n" +
-    "📅 Book your free UK counselling session today!",
-
-  australia:
-    "🇦🇺 Australia's Group of Eight universities are world-class. The post-study visa gives you 2–4 years to work. " +
-    "Healthcare and nursing graduates get priority PR points under Skills in Demand visa. " +
-    "Students can work 48hrs/fortnight at AUD 23+/hr minimum wage — one of the world's highest.\n\n" +
-    "📅 Book a free session with our Australia specialist!",
-
-  usa:
-    "🇺🇸 USA has MIT, Stanford, CMU — the world's top research universities. STEM graduates get a 3-year OPT extension. " +
-    "GRE is required for most MS programs. CS starting salaries are $110,000–140,000/yr. " +
-    "Main challenge: 10–20+ year Green Card backlog for Indians.\n\n" +
-    "📅 Book a free session to plan your USA application strategy!",
-
-  ielts:
-    "📝 IELTS requirements by country:\n" +
-    "• Ireland: 6.0–6.5 overall\n" +
-    "• UK: 6.0–7.0 (Russell Group: 6.5+)\n" +
-    "• Germany (English programs): 6.5\n" +
-    "• Canada SDS: 6.0 minimum each skill\n" +
-    "• Australia: 6.0–6.5 (Go8 unis: 6.5+)\n" +
-    "• USA: 6.5–7.5 plus GRE/GMAT\n\n" +
-    "A 6.5 overall gives you access to the majority of universities across all destinations!\n\n" +
-    "📅 Not sure if your score qualifies? Book a free check with our counsellors!",
-
-  cost:
-    "💰 Annual total costs for Indian students:\n" +
-    "• Germany: ₹8–12L (nearly free tuition!)\n" +
-    "• Ireland: ₹18–28L\n" +
-    "• UK: ₹25–45L\n" +
-    "• Canada: ₹28–48L\n" +
-    "• Australia: ₹30–50L\n" +
-    "• USA: ₹45–80L\n\n" +
-    "Germany has the highest ROI by far! Book a free session for your personalised cost breakdown.",
-
-  visa:
-    "🛂 Student visa processing timelines:\n" +
-    "• Germany: 8–12 weeks (book embassy appointment early)\n" +
-    "• Ireland: 3–6 weeks\n" +
-    "• UK: 3–4 weeks (priority available)\n" +
-    "• Canada SDS: ~20 days — fastest!\n" +
-    "• Australia: 4–6 weeks\n" +
-    "• USA: 4–12 weeks (embassy interview required)\n\n" +
-    "ITARC has a 97% visa success rate. We handle all documentation end-to-end!\n\n" +
-    "📅 Book a free visa consultation today.",
-
-  loan:
-    "💳 Education loan options for study abroad:\n" +
-    "• SBI: Up to ₹1.5 Cr from 8.5% p.a.\n" +
-    "• HDFC Credila: Up to ₹1 Cr, specialist lender\n" +
-    "• Avanse: Fast NBFC approval\n" +
-    "• Axis Bank / Bank of Baroda: Both available\n\n" +
-    "ITARC helps you prepare all documents and get your loan sanctioned BEFORE your visa appointment!\n\n" +
-    "📅 Book a free loan guidance session.",
-
-  pr:
-    "🏡 Fastest PR pathways for Indian students:\n" +
-    "🥇 Canada: Express Entry in 2–3 years (world's fastest)\n" +
-    "🥈 Germany: EU Blue Card → PR in just 21 months\n" +
-    "🥉 Australia: Skills in Demand visa → PR in 3–5 years\n" +
-    "⚠️  USA: 10–20+ year Green Card backlog for Indians\n\n" +
-    "Canada and Germany are your best bets for settling abroad long-term!\n\n" +
-    "📅 Book a free PR strategy session with ITARC."
-};
-
-function getFAQReply(text) {
-  const t = (text || '').toLowerCase();
-  if (t.includes('germany') || t.includes('german'))                          return FAQ.germany;
-  if (t.includes('ireland') || t.includes('irish') || t.includes('dublin'))   return FAQ.ireland;
-  if (t.includes('canada') || t.includes('pgwp') || t.includes('sds'))        return FAQ.canada;
-  if (t.includes('uk') || t.includes('britain') || t.includes('england') ||
-      t.includes('london') || t.includes('oxford') || t.includes('cambridge')) return FAQ.uk;
-  if (t.includes('australia') || t.includes('sydney') || t.includes('melbourne')) return FAQ.australia;
-  if (t.includes('usa') || t.includes('america') || t.includes('united states') ||
-      t.includes('stanford') || t.includes('mit'))                            return FAQ.usa;
-  if (t.includes('ielts') || t.includes('band score') || t.includes('english test')) return FAQ.ielts;
-  if (t.includes('cost') || t.includes('fee') || t.includes('expensive') ||
-      t.includes('cheap') || t.includes('afford') || t.includes('budget'))    return FAQ.cost;
-  if (t.includes('visa') || t.includes('permit') || t.includes('immigration')) return FAQ.visa;
-  if (t.includes('loan') || t.includes('bank') || t.includes('finance') ||
-      t.includes('money') || t.includes('fund'))                              return FAQ.loan;
-  if (t.includes('pr ') || t.includes('permanent') || t.includes('settle') ||
-      t.includes('citizenship') || t.includes('residency'))                   return FAQ.pr;
-
-  return (
-    "Great question! 😊 I can help you with:\n\n" +
-    "🌍 Best country for your MS / MBA / PhD profile\n" +
-    "📊 Tuition fees and living costs by country\n" +
-    "🛂 Visa process and processing timelines\n" +
-    "💳 Education loans — banks, rates, documents\n" +
-    "🏡 PR pathways — which country is fastest\n" +
-    "📝 IELTS score requirements\n\n" +
-    "Just type your question! Or book a FREE 30-min session with our counsellors for personalised guidance.\n\n" +
-    "📅 Click 'Book Free Counselling' below."
-  );
+function getDriveClient() {
+  const auth = new google.auth.GoogleAuth({
+    credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON),
+    scopes: ['https://www.googleapis.com/auth/drive']
+  });
+  return google.drive({ version: 'v3', auth });
 }
 
-// ── /api/agent — Secure AI Proxy ────────────────────────────────────────────
-app.post('/api/agent', (req, res) => {
-  const { messages } = req.body;
+async function createStudentFolder(drive, studentName, country, level, course) {
+  const year = new Date().getFullYear();
+  // Sanitise name for folder: "2025-Arjun-Desai-Ireland-MS"
+  const safeName = studentName.replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/\s+/g,'-');
+  const safeCountry = country.replace(/\s+/g,'-');
+  const levelShort = { "Bachelor's":'BSc', "Master's":'MS', "MBA":'MBA', "PhD":'PhD' }[level] || level;
+  const folderName = `${year}-${safeName}-${safeCountry}-${levelShort}`;
 
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({ error: 'messages array required' });
-  }
-
-  // No API key → instant smart FAQ reply
-  if (!API_KEY) {
-    const lastUser = [...messages].reverse().find(m => m.role === 'user');
-    return res.json({ faq: getFAQReply(lastUser ? lastUser.content : '') });
-  }
-
-  // Proxy to Anthropic — key never leaves server
-  const body = JSON.stringify({
-    model:      'claude-sonnet-4-20250514',
-    max_tokens: 500,
-    system:     SYSTEM_PROMPT,
-    messages:   messages.slice(-10)
+  const folder = await drive.files.create({
+    requestBody: {
+      name: folderName,
+      mimeType: 'application/vnd.google-apps.folder',
+      parents: [process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID]
+    },
+    fields: 'id,name'
   });
 
-  const options = {
-    hostname: 'api.anthropic.com',
-    path:     '/v1/messages',
-    method:   'POST',
-    headers:  {
-      'Content-Type':      'application/json',
-      'Content-Length':    Buffer.byteLength(body),
-      'x-api-key':         API_KEY,
-      'anthropic-version': '2023-06-01'
-    }
+  // Make folder readable by anyone with link (counsellors can open it)
+  await drive.permissions.create({
+    fileId: folder.data.id,
+    requestBody: { role: 'reader', type: 'anyone' }
+  });
+
+  return {
+    folderId: folder.data.id,
+    folderName,
+    folderLink: `https://drive.google.com/drive/folders/${folder.data.id}`
   };
+}
 
-  const proxyReq = https.request(options, proxyRes => {
-    let data = '';
-    proxyRes.on('data', chunk => { data += chunk; });
-    proxyRes.on('end', () => {
-      try {
-        const parsed = JSON.parse(data);
-        // Forward Anthropic response directly to browser
-        res.json(parsed);
-      } catch (e) {
-        const lastUser = [...messages].reverse().find(m => m.role === 'user');
-        res.json({ faq: getFAQReply(lastUser ? lastUser.content : '') });
-      }
-    });
+async function uploadFileToDrive(drive, fileBuffer, fileName, mimeType, folderId) {
+  const bufferStream = new stream.PassThrough();
+  bufferStream.end(fileBuffer);
+
+  const uploaded = await drive.files.create({
+    requestBody: {
+      name: fileName,
+      parents: [folderId]
+    },
+    media: {
+      mimeType: mimeType || 'application/octet-stream',
+      body: bufferStream
+    },
+    fields: 'id,name,webViewLink'
   });
 
-  proxyReq.on('error', () => {
-    const lastUser = [...messages].reverse().find(m => m.role === 'user');
-    res.json({ faq: getFAQReply(lastUser ? lastUser.content : '') });
-  });
+  return uploaded.data;
+}
 
-  proxyReq.write(body);
-  proxyReq.end();
+// ────────────────────────────────────────────────
+// EMAIL HELPERS
+// ────────────────────────────────────────────────
+
+async function sendCounsellorAlert({ student, folderLink, uploadedFiles }) {
+  const fileList = uploadedFiles.map(f =>
+    `<li style="margin-bottom:6px;font-size:13px"><strong>${f.name}</strong></li>`
+  ).join('');
+
+  await sgMail.send({
+    to:      process.env.COUNSELLOR_EMAIL,
+    from:    { email: process.env.SENDGRID_FROM_EMAIL, name: 'ITARC Document System' },
+    subject: `📥 New documents from ${student.name} — ${student.country} ${student.level}`,
+    html: `
+<div style="font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;padding:20px">
+<div style="max-width:600px;margin:0 auto;background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)">
+  <div style="background:linear-gradient(135deg,#0b1f3a,#2563eb);padding:24px 32px">
+    <div style="font-size:20px;font-weight:800;color:white">📥 New Student Documents</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:4px">ITARC Document Management System</div>
+  </div>
+  <div style="padding:24px 32px">
+    <p style="font-size:15px;font-weight:600;color:#0b1f3a;margin-bottom:16px">New submission received — action required</p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+      <tr><td style="padding:8px 0;font-size:13px;color:#64748b;width:120px">Student</td><td style="padding:8px 0;font-size:13px;font-weight:700;color:#0b1f3a">${student.name}</td></tr>
+      <tr><td style="padding:8px 0;font-size:13px;color:#64748b">Phone</td><td style="padding:8px 0;font-size:13px;font-weight:600">${student.phone}</td></tr>
+      <tr><td style="padding:8px 0;font-size:13px;color:#64748b">Email</td><td style="padding:8px 0;font-size:13px;font-weight:600">${student.email}</td></tr>
+      <tr><td style="padding:8px 0;font-size:13px;color:#64748b">Destination</td><td style="padding:8px 0;font-size:13px;font-weight:600">${student.country}</td></tr>
+      <tr><td style="padding:8px 0;font-size:13px;color:#64748b">Level</td><td style="padding:8px 0;font-size:13px;font-weight:600">${student.level}</td></tr>
+      <tr><td style="padding:8px 0;font-size:13px;color:#64748b">Course</td><td style="padding:8px 0;font-size:13px;font-weight:600">${student.course || 'Not specified'}</td></tr>
+    </table>
+    <div style="background:#f8fafc;border-radius:10px;padding:14px 18px;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">📎 Files Uploaded (${uploadedFiles.length})</div>
+      <ul style="margin:0;padding-left:18px">${fileList}</ul>
+    </div>
+    <div style="text-align:center">
+      <a href="${folderLink}" style="display:inline-block;background:#2563eb;color:white;text-decoration:none;padding:13px 28px;border-radius:10px;font-size:14px;font-weight:700;margin-bottom:10px">
+        📁 Open Google Drive Folder
+      </a>
+      <div style="margin-top:8px">
+        <a href="${process.env.UPLOAD_PORTAL_URL}/admin" style="font-size:12.5px;color:#2563eb;text-decoration:none;font-weight:600">Open Admin Dashboard →</a>
+      </div>
+    </div>
+  </div>
+</div>
+</div>`
+  });
+}
+
+async function sendStudentConfirmation(student, folderLink) {
+  await sgMail.send({
+    to:   student.email,
+    from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'ITARC Counselling' },
+    subject: `✅ Documents received — your ${student.country} application`,
+    html: `
+<div style="font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;padding:20px">
+<div style="max-width:600px;margin:0 auto;background:white;border-radius:14px;overflow:hidden">
+  <div style="background:linear-gradient(135deg,#0b1f3a,#2563eb);padding:24px 32px">
+    <div style="font-size:20px;font-weight:800;color:white">ITARC</div>
+  </div>
+  <div style="padding:28px 32px">
+    <p style="font-size:16px;font-weight:700;color:#0b1f3a">Hi ${student.name}! 👋</p>
+    <p style="font-size:14px;color:#475569;line-height:1.7;margin:12px 0">
+      We've received your documents for your <strong>${student.country} ${student.level}</strong> application. 
+      Your counsellor will review them within <strong>1–2 business days</strong> and contact you with next steps.
+    </p>
+    <div style="background:#ecfdf5;border-radius:10px;padding:14px 18px;margin:20px 0">
+      <div style="font-size:13px;font-weight:700;color:#065f46">✅ What happens next:</div>
+      <ol style="margin:8px 0 0;padding-left:18px;font-size:13px;color:#475569;line-height:2">
+        <li>Counsellor reviews each document</li>
+        <li>You'll receive approval or re-upload request via WhatsApp + email</li>
+        <li>Once approved — university applications begin within 48 hours</li>
+      </ol>
+    </div>
+    <div style="text-align:center;margin:24px 0">
+      <a href="${folderLink}" style="display:inline-block;background:#eff6ff;color:#2563eb;text-decoration:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;border:1.5px solid #bfdbfe">
+        📁 View Your Document Folder
+      </a>
+    </div>
+    <p style="font-size:13px;color:#475569">Questions? WhatsApp us: <strong>${process.env.COUNSELLOR_PHONE || '+91 84549 92179'}</strong></p>
+  </div>
+</div>
+</div>`
+  });
+}
+
+// ────────────────────────────────────────────────
+// MULTER CONFIG
+// ────────────────────────────────────────────────
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.pdf','.jpg','.jpeg','.png','.doc','.docx'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, allowed.includes(ext));
+  }
 });
 
-// ── Counselling form ────────────────────────────────────────────────────────
-app.post('/api/counselling', (req, res) => {
-  const { name, email, phone } = req.body || {};
-  console.log('📋 New counselling request:', name, '|', email, '|', phone);
+// ────────────────────────────────────────────────
+// ROUTES
+// ────────────────────────────────────────────────
+
+// ── POST /api/upload ─────────────────────────────
+// Student submits their documents
+app.post('/api/upload', upload.array('documents', 15), async (req, res) => {
+  try {
+    const { studentName, phone, email, country, level, course, counsellor, intake } = req.body;
+
+    if (!studentName || !phone || !email || !country) {
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, error: 'No files uploaded' });
+    }
+
+    // 1. Connect to Google Drive
+    const drive = getDriveClient();
+
+    // 2. Create student folder
+    const { folderId, folderName, folderLink } = await createStudentFolder(
+      drive, studentName, country, level, course
+    );
+
+    // 3. Upload each file into the folder
+    const uploadedFiles = [];
+    for (const file of req.files) {
+      const uploaded = await uploadFileToDrive(
+        drive, file.buffer, file.originalname, file.mimetype, folderId
+      );
+      uploadedFiles.push({ name: file.originalname, driveId: uploaded.id, link: uploaded.webViewLink });
+    }
+
+    // 4. Build doc status list (what's uploaded vs pending)
+    const knownDocIds = ['passport','degree','ielts','sop','lor','cv','bank'];
+    const docs = knownDocIds.map(id => ({
+      name: id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g,' '),
+      status: 'pending', // will be updated when files are matched by name
+      required: true
+    }));
+
+    // 5. Save student record
+    const uploadToken = crypto.randomBytes(20).toString('hex');
+    const student = {
+      id: crypto.randomUUID(),
+      name: studentName, phone, email, country, level,
+      course: course || 'Not specified',
+      counsellor: counsellor || 'Unassigned',
+      intake: intake || 'TBD',
+      status: 'review',
+      docs,
+      uploadedFiles,
+      folderId,
+      folderLink,
+      folderName,
+      uploadToken,
+      reminderCount: 0,
+      lastReminderSentAt: null,
+      createdAt: new Date().toISOString(),
+      approvedAt: null,
+      notes: ''
+    };
+    STUDENTS.push(student);
+
+    // 6. Send alerts (non-blocking)
+    Promise.all([
+      sendCounsellorAlert({ student, folderLink, uploadedFiles }),
+      sendStudentConfirmation(student, folderLink)
+    ]).catch(err => console.error('Email error:', err.message));
+
+    res.json({
+      success: true,
+      message: 'Documents uploaded successfully',
+      folderLink,
+      folderName,
+      studentId: student.id
+    });
+
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── GET /api/admin/students ──────────────────────
+app.get('/api/admin/students', (req, res) => {
+  // In production: add auth middleware here
+  res.json({ students: STUDENTS });
+});
+
+// ── POST /api/admin/approve/:id ──────────────────
+app.post('/api/admin/approve/:id', async (req, res) => {
+  const student = STUDENTS.find(s => s.id === req.params.id);
+  if (!student) return res.status(404).json({ error: 'Student not found' });
+
+  student.status = 'approved';
+  student.approvedAt = new Date().toISOString();
+  const { nextStep } = req.body;
+
+  // Move folder to Approved subfolder on Drive
+  try {
+    const drive = getDriveClient();
+    const approvedFolderId = process.env.GOOGLE_DRIVE_APPROVED_FOLDER_ID;
+    if (approvedFolderId) {
+      await drive.files.update({
+        fileId: student.folderId,
+        addParents: approvedFolderId,
+        removeParents: process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID
+      });
+    }
+  } catch(e) { console.warn('Drive move failed:', e.message); }
+
+  // Email student
+  try {
+    await sgMail.send({
+      to:   student.email,
+      from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'ITARC Counselling' },
+      subject: `🎉 Documents Approved — your ${student.country} application moves forward!`,
+      html: `<div style="font-family:Arial,sans-serif;padding:24px;max-width:600px">
+        <h2 style="color:#059669">✅ Your documents have been approved!</h2>
+        <p>Hi ${student.name}, great news — your counsellor has reviewed and approved all your documents.</p>
+        <p>We will now begin your <strong>${nextStep === 'visa' ? 'visa filing' : nextStep === 'loan' ? 'loan processing' : 'university applications'}</strong> within 48 hours.</p>
+        <p>Your counsellor will be in touch on WhatsApp shortly.</p>
+        <p>— ITARC Team</p>
+      </div>`
+    });
+  } catch(e) { console.warn('Approval email failed:', e.message); }
+
+  res.json({ success: true, student });
+});
+
+// ── POST /api/admin/reject/:id ───────────────────
+app.post('/api/admin/reject/:id', async (req, res) => {
+  const student = STUDENTS.find(s => s.id === req.params.id);
+  if (!student) return res.status(404).json({ error: 'Student not found' });
+
+  student.status = 'pending';
+  const { reason, requestedDocs } = req.body;
+
+  const reUploadLink = `${process.env.UPLOAD_PORTAL_URL}/upload?token=${student.uploadToken}`;
+
+  try {
+    await sgMail.send({
+      to:   student.email,
+      from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'ITARC Counselling' },
+      subject: `📋 Re-upload required — your ${student.country} application`,
+      html: `<div style="font-family:Arial,sans-serif;padding:24px;max-width:600px">
+        <h2 style="color:#d97706">⚠️ Some documents need attention</h2>
+        <p>Hi ${student.name}, we've reviewed your documents and need a few corrections.</p>
+        ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+        ${requestedDocs ? `<p><strong>Please re-upload:</strong> ${requestedDocs}</p>` : ''}
+        <a href="${reUploadLink}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700">
+          📎 Re-upload Documents
+        </a>
+        <p style="margin-top:16px">Questions? WhatsApp: ${process.env.COUNSELLOR_PHONE}</p>
+      </div>`
+    });
+  } catch(e) { console.warn('Reject email failed:', e.message); }
+
   res.json({ success: true });
 });
 
-// ── Serve index.html for all other routes ───────────────────────────────────
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// ── POST /api/admin/remind/:id ───────────────────
+app.post('/api/admin/remind/:id', async (req, res) => {
+  const student = STUDENTS.find(s => s.id === req.params.id);
+  if (!student) return res.status(404).json({ error: 'Student not found' });
+
+  // Import and call reminder system
+  const { sendReminderToStudent } = require('./reminder-system');
+  await sendReminderToStudent(student);
+
+  student.lastReminderSentAt = new Date().toISOString();
+  student.reminderCount = (student.reminderCount || 0) + 1;
+
+  res.json({ success: true, reminderCount: student.reminderCount });
 });
 
-// ── Start ───────────────────────────────────────────────────────────────────
+// ── POST /api/admin/remind-all ───────────────────
+app.post('/api/admin/remind-all', async (req, res) => {
+  const pending = STUDENTS.filter(s => s.status === 'pending');
+  const { sendReminderToStudent } = require('./reminder-system');
+  let count = 0;
+  for (const s of pending) {
+    await sendReminderToStudent(s).catch(e => console.warn(e.message));
+    s.lastReminderSentAt = new Date().toISOString();
+    s.reminderCount = (s.reminderCount || 0) + 1;
+    count++;
+  }
+  res.json({ success: true, sent: count });
+});
+
+// ── POST /api/admin/add-student ──────────────────
+// Manually add a student from dashboard
+app.post('/api/admin/add-student', (req, res) => {
+  const { name, phone, email, country, level, course, counsellor } = req.body;
+  const uploadToken = crypto.randomBytes(20).toString('hex');
+  const student = {
+    id: crypto.randomUUID(),
+    name, phone, email, country, level, course: course || 'Not specified',
+    counsellor: counsellor || 'Unassigned',
+    intake: 'TBD', status: 'pending',
+    docs: [], uploadedFiles: [],
+    folderId: null, folderLink: null, folderName: null,
+    uploadToken, reminderCount: 0, lastReminderSentAt: null,
+    createdAt: new Date().toISOString(), approvedAt: null, notes: ''
+  };
+  STUDENTS.push(student);
+
+  // Send welcome WhatsApp + email (optional)
+  const uploadLink = `${process.env.UPLOAD_PORTAL_URL}/upload?token=${uploadToken}`;
+  // sendWelcomeMessage(student, uploadLink); // uncomment when ready
+
+  res.json({ success: true, student, uploadLink });
+});
+
+// ── GET /api/admin/stats ─────────────────────────
+app.get('/api/admin/stats', (req, res) => {
+  res.json({
+    total:      STUDENTS.length,
+    pending:    STUDENTS.filter(s => s.status === 'pending').length,
+    review:     STUDENTS.filter(s => s.status === 'review').length,
+    approved:   STUDENTS.filter(s => s.status === 'approved').length,
+    processing: STUDENTS.filter(s => s.status === 'processing').length,
+  });
+});
+
+// Serve upload portal
+app.get('/upload', (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
+// Serve admin dashboard
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+// Serve main website
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// ────────────────────────────────────────────────
+// START
+// ────────────────────────────────────────────────
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log('');
-  console.log('🚀  ITARC Business server running on port ' + PORT);
-  console.log('    API key configured: ' + (API_KEY ? 'YES ✅  — AI agent active' : 'NO ❌  — add ANTHROPIC_API_KEY or ITARC_API_KEY to env'));
-  console.log('');
+  console.log(`✅ ITARC server running on port ${PORT}`);
+
+  // Start reminder cron
+  require('./reminder-system');
 });
