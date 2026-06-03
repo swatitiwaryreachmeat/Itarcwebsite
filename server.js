@@ -445,6 +445,54 @@ app.get('/api/admin/stats', (req, res) => {
   });
 });
 
+// ── GET /test-drive ── diagnostic route ─────────
+app.get('/test-drive', async (req, res) => {
+  const results = {};
+  try {
+    // Test 1: Can we authenticate?
+    results.step1 = 'Authenticating...';
+    const drive = getDriveClient();
+    results.step1 = 'Auth OK';
+
+    // Test 2: Can we list files?
+    results.step2 = 'Listing files...';
+    const list = await drive.files.list({ pageSize: 1 });
+    results.step2 = 'List OK';
+
+    // Test 3: Can we create a file in root?
+    results.step3 = 'Creating test file...';
+    const f = await drive.files.create({
+      requestBody: { name: 'itarc-test.txt' },
+      media: { mimeType: 'text/plain', body: 'test' },
+      fields: 'id'
+    });
+    results.step3 = 'Create OK — id: ' + f.data.id;
+
+    // Test 4: Can we move it to the parent folder?
+    results.step4 = 'Moving to parent folder...';
+    results.parentFolderId = process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID;
+    await drive.files.update({
+      fileId: f.data.id,
+      addParents: process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID,
+      removeParents: 'root',
+      supportsAllDrives: true,
+      fields: 'id,parents'
+    });
+    results.step4 = 'Move OK';
+
+    // Test 5: Delete the test file
+    await drive.files.delete({ fileId: f.data.id });
+    results.step5 = 'Cleanup OK';
+
+    res.json({ success: true, results });
+  } catch(e) {
+    results.error = e.message;
+    results.errorCode = e.code;
+    results.errorDetails = e.errors;
+    res.json({ success: false, results });
+  }
+});
+
 // Serve upload portal
 app.get('/upload', (req, res) => res.sendFile(path.join(__dirname, 'public', 'upload.html')));
 // Serve admin dashboard
