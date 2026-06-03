@@ -54,6 +54,7 @@ async function createStudentFolder(drive, studentName, country, level, course) {
   const folderName = `${year}-${safeName}-${safeCountry}-${levelShort}`;
 
   const folder = await drive.files.create({
+    supportsAllDrives: true,
     requestBody: {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
@@ -64,6 +65,7 @@ async function createStudentFolder(drive, studentName, country, level, course) {
 
   // Make folder readable by anyone with link (counsellors can open it)
   await drive.permissions.create({
+    supportsAllDrives: true,
     fileId: folder.data.id,
     requestBody: { role: 'reader', type: 'anyone' }
   });
@@ -80,6 +82,7 @@ async function uploadFileToDrive(drive, fileBuffer, fileName, mimeType, folderId
   bufferStream.end(fileBuffer);
 
   const uploaded = await drive.files.create({
+    supportsAllDrives: true,          // ← required for shared/My Drive folders
     requestBody: {
       name: fileName,
       parents: [folderId]
@@ -208,6 +211,16 @@ app.post('/api/upload', upload.array('documents', 15), async (req, res) => {
     }
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ success: false, error: 'No files uploaded' });
+    }
+
+    // Duplicate submission guard — prevent double-submit within 30 seconds
+    const recentDuplicate = STUDENTS.find(s =>
+      s.email === email &&
+      s.name === studentName &&
+      (new Date() - new Date(s.createdAt)) < 30000
+    );
+    if (recentDuplicate) {
+      return res.json({ success: true, message: 'Already submitted', folderLink: recentDuplicate.folderLink, studentId: recentDuplicate.id });
     }
 
     // 1. Connect to Google Drive
