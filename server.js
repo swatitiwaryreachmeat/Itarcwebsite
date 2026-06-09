@@ -1,16 +1,51 @@
 require('dotenv').config();
-const express  = require('express');
-const multer   = require('multer');
-const cors     = require('cors');
-const path     = require('path');
+const express    = require('express');
+const multer     = require('multer');
+const cors       = require('cors');
+const path       = require('path');
 const { google } = require('googleapis');
-const sgMail   = require('@sendgrid/mail');
-const crypto   = require('crypto');
+const sgMail     = require('@sendgrid/mail');
+const crypto     = require('crypto');
+const helmet     = require('helmet');
+const rateLimit  = require('express-rate-limit');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// ── Security: HTTP headers ────────────────────────
+app.use(helmet({ contentSecurityPolicy: false }));
+
+// ── Security: CORS — only allow your domains ──────
+app.use(cors({
+  origin: [
+    'https://itarcbusiness.com',
+    'https://www.itarcbusiness.com',
+    'https://itarcwebsiteflygrad.onrender.com'
+  ]
+}));
+
+// ── Security: Rate limiting ───────────────────────
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 10,
+  message: { error: 'Too many uploads. Please try again in 15 minutes.' }
+});
+const adminLimiter = rateLimit({ windowMs: 60 * 1000, max: 60 });
+
+// ── Security: Admin basic auth ────────────────────
+const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'itarc2025admin';
+app.use('/admin', (req, res, next) => {
+  const auth = req.headers.authorization;
+  if (!auth) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="ITARC Admin"');
+    return res.status(401).send('Authentication required');
+  }
+  const [, encoded] = auth.split(' ');
+  const [, password] = Buffer.from(encoded, 'base64').toString().split(':');
+  if (password !== ADMIN_PASS) return res.status(403).send('Forbidden');
+  next();
+});
+
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(express.static('public'));
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
