@@ -31,18 +31,19 @@ const uploadLimiter = rateLimit({
 const adminLimiter = rateLimit({ windowMs: 60 * 1000, max: 60 });
 
 // ── Security: Admin basic auth ────────────────────
-const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'itarc2025admin';
-app.use('/admin', (req, res, next) => {
-  const auth = req.headers.authorization;
-  if (!auth) {
-    res.setHeader('WWW-Authenticate', 'Basic realm="ITARC Admin"');
-    return res.status(401).send('Authentication required');
-  }
-  const [, encoded] = auth.split(' ');
-  const [, password] = Buffer.from(encoded, 'base64').toString().split(':');
-  if (password !== ADMIN_PASS) return res.status(403).send('Forbidden');
-  next();
-});
+// NOTE: Temporarily disabled — re-enable by uncommenting when ready
+// const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'itarc2025admin';
+// app.use('/admin', (req, res, next) => {
+//   const auth = req.headers.authorization;
+//   if (!auth) {
+//     res.setHeader('WWW-Authenticate', 'Basic realm="ITARC Admin"');
+//     return res.status(401).send('Authentication required');
+//   }
+//   const [, encoded] = auth.split(' ');
+//   const [, password] = Buffer.from(encoded, 'base64').toString().split(':');
+//   if (password !== ADMIN_PASS) return res.status(403).send('Forbidden');
+//   next();
+// });
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
