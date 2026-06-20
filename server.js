@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express    = require('express');
+const compression = require('compression');
 const multer     = require('multer');
 const cors       = require('cors');
 const path       = require('path');
@@ -10,6 +11,16 @@ const helmet     = require('helmet');
 const rateLimit  = require('express-rate-limit');
 
 const app = express();
+
+// ── Performance: GZIP compression ─────────────────
+app.use(compression({
+  level: 6,
+  threshold: 1024,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
+}));
 
 // ── Security: HTTP headers ────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -47,7 +58,20 @@ const adminLimiter = rateLimit({ windowMs: 60 * 1000, max: 60 });
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-app.use(express.static('public'));
+app.use(express.static('public', {
+  maxAge: '1h',          // Cache HTML for 1 hour
+  etag: true,            // Enable ETags for cache validation
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      // HTML: short cache so updates deploy fast
+      res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+    } else {
+      // Images/fonts: cache for 7 days
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+    }
+  }
+}));
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
