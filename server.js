@@ -23,7 +23,22 @@ app.use(compression({
 }));
 
 // ── Security: HTTP headers ────────────────────────
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: false,
+  frameguard: { action: 'deny' },          // X-Frame-Options: DENY — prevents clickjacking
+  hsts: { maxAge: 31536000, includeSubDomains: true }, // Force HTTPS for 1 year
+  noSniff: true,                           // X-Content-Type-Options: nosniff
+  xssFilter: true,                         // X-XSS-Protection
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
+
+// Force HTTPS redirect in production
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(301, 'https://' + req.headers.host + req.url);
+  }
+  next();
+});
 
 // ── Security: CORS — only allow your domains ──────
 app.use(cors({
@@ -57,6 +72,13 @@ const adminLimiter = rateLimit({ windowMs: 60 * 1000, max: 60 });
 // });
 
 app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
+
+// Input sanitization helper
+const sanitize = (str) => {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[<>"'%;()&+]/g, '').trim().substring(0, 500);
+};
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(express.static('public', {
   maxAge: '1h',          // Cache HTML for 1 hour
@@ -265,6 +287,49 @@ app.get('/test-drive', async (req, res) => {
 });
 
 // ── POST /api/upload ──────────────────────────────
+
+// ── Secure AI Chat Proxy ─────────────────────────
+// API key stays on server — never exposed to browser
+const chatLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 20,
+  message: { error: 'Too many messages. Please try again later.' }
+});
+
+app.post('/api/chat', chatLimiter, async (req, res) => {
+  try {
+    const { messages } = req.body;
+    if (!messages || !Array.isArray(messages) || messages.length > 10) {
+      return res.status(400).json({ error: 'Invalid request' });
+    }
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return res.status(503).json({ error: 'AI service not configured' });
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: "You are Flygrad's friendly AI study abroad advisor for Indian students. Be helpful, concise and warm. Always end with a CTA to book free counselling at +91 62915 27895.",
+        messages: messages.map(m => ({
+          role: m.role,
+          content: String(m.content).replace(/[<>]/g,'').substring(0, 1000)
+        }))
+      })
+    });
+    if (!response.ok) return res.status(502).json({ error: 'AI service unavailable' });
+    const data = await response.json();
+    res.json({ reply: data.content?.[0]?.text || 'Sorry, please try again.' });
+  } catch(err) {
+    console.error('Chat error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.post('/api/upload', upload.array('documents', 15), async (req, res) => {
   try {
     const { studentName, phone, email, country, level, course, counsellor, intake } = req.body;
@@ -440,6 +505,45 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 
 // ── Start ─────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
+// Required env vars check
+const REQUIRED_VARS = ['GOOGLE_SERVICE_ACCOUNT_JSON','GOOGLE_DRIVE_PARENT_FOLDER_ID'];
+REQUIRED_VARS.forEach(v => { if(!process.env[v]) console.warn('⚠️  Missing env var:', v); });
+if(!process.env.ANTHROPIC_API_KEY) console.warn('⚠️  ANTHROPIC_API_KEY not set — AI chat will not work');
+
+// ── Multi-page SEO Routes ─────────────────────────
+const path = require('path');
+const pageRoutes = {
+  '/':                  'index.html',
+  '/study-abroad':      'study-abroad.html',
+  '/study-in-ireland':  'ireland.html',
+  '/study-in-uk':       'uk.html',
+  '/study-in-germany':  'germany.html',
+  '/study-in-france':   'france.html',
+  '/study-in-canada':   'canada.html',
+  '/study-in-australia':'australia.html',
+  '/study-in-usa':      'usa.html',
+  '/immigration':       'immigration.html',
+  '/education-loan':    'education-loan.html',
+  '/travel-desk':       'travel-desk.html',
+  '/compare-countries': 'compare.html',
+  '/privacy-policy':    'privacy.html',
+  '/terms':             'terms.html',
+  '/contact':           'index.html',
+  '/sitemap.xml':       'sitemap.xml',
+  '/robots.txt':        'robots.txt',
+};
+
+Object.entries(pageRoutes).forEach(([route, file]) => {
+  app.get(route, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', file));
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log('ITARC server running on port ' + PORT);
   try { require('./reminder-system'); } catch(e) { console.log('Reminder system not loaded:', e.message); }
